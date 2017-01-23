@@ -29,8 +29,7 @@ $ pip install -r requirements.txt
 Alternatively, you can try installing via pip but this is not recommended since it relies on deprecated functions.
 
 ```bash
-$ pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git
---process-dependency-links --allow-all-external
+$ pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git --process-dependency-links --allow-all-external
 ```
 
 ### Important: Patching MoviePy
