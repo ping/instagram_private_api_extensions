@@ -1,6 +1,6 @@
 # Instagram Private API Extensions
 
-A extension module to [instagram\_private\_api](https://github.com/ping/instagram_private_api) to help with common tasks such as posting a photo or video.
+An extension module to [instagram\_private\_api](https://github.com/ping/instagram_private_api) to help with common tasks such as posting a photo or video.
 
 ## Features
 
