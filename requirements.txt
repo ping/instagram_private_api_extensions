@@ -1,0 +1,2 @@
+-e git+https://github.com/Zulko/moviepy.git@d4c9c37#egg=moviepy-0
+Pillow>=4.0.0
