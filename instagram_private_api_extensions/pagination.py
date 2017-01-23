@@ -8,6 +8,7 @@ def page(fn, args, cursor_key='max_id', get_cursor=lambda r: r.get('next_max_id'
     .. code-block:: python
 
         from instagram_private_api import Client
+        from instagram_web_api import WebClient
         from instagram_private_api_extensions.pagination import page
 
         api = Client('username', 'password')
@@ -15,6 +16,18 @@ def page(fn, args, cursor_key='max_id', get_cursor=lambda r: r.get('next_max_id'
         for results in page(api.user_feed, args={'user_id': '2958144170'}):
             if results.get('items'):
                 items.extend(results['items'])
+        print(len(items))
+
+        webapi = WebClient(username='username', password='password', authenticate=True)
+        items = []
+        for results in pagination.page(
+                webapi.user_feed,
+                args={'user_id': '2958144170', 'extract': False},
+                cursor_key='end_cursor',
+                get_cursor=lambda r: r.get('media', {}).get('page_info', {}).get('end_cursor')):
+
+            if results.get('media', {}).get('nodes', []):
+                items.extend(results.get('media', {}).get('nodes', []))
         print(len(items))
 
     :param fn: function call
