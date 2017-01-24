@@ -2,6 +2,14 @@ import os
 import time
 import hashlib
 import io
+import re
+try:
+    # python 2.x
+    from urllib2 import urlopen
+    from urllib import urlretrieve
+except ImportError:
+    # python 3.x
+    from urllib.request import urlopen, urlretrieve
 from PIL import Image
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.fx.all import resize, crop
@@ -66,6 +74,12 @@ def calc_crop(aspect_ratios, curr_size):
         return left, top, right, bottom
 
 
+def is_remote(media):
+    if re.match(r'^https?://', media):
+        return True
+    return False
+
+
 def prepare_image(img, max_size=(1280, 1280),
                   aspect_ratios=(4.0 / 5.0, 90.0 / 47.0),
                   save_path=None):
@@ -78,7 +92,12 @@ def prepare_image(img, max_size=(1280, 1280),
     :param save_path: optional output file path
     :return:
     """
-    im = Image.open(img)
+    if is_remote(img):
+        res = urlopen(img)
+        im = Image.open(res)
+    else:
+        im = Image.open(img)
+
     new_size = calc_resize(max_size, im.size)
     if new_size:
         im = im.resize(new_size)
@@ -122,7 +141,17 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
 
     vid_is_modified = False
 
-    vidclip = VideoFileClip(vid)
+    temp_remote_filename = ''
+    if is_remote(vid):
+        m = hashlib.md5()
+        m.update(vid.encode('utf-8'))
+        temp_remote_filename = '%s_%s_%d.tmp.mp4' % (
+            os.path.basename(vid).replace('.', ''), m.hexdigest()[:15], int(time.time()))
+        urlretrieve(vid, filename=temp_remote_filename)
+        vidclip = VideoFileClip(temp_remote_filename)
+        vid = temp_remote_filename
+    else:
+        vidclip = VideoFileClip(vid)
 
     if vidclip.duration < 3 * 1.0:
         raise ValueError('Duration is too short')
@@ -192,6 +221,8 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         os.remove(temp_thumbnail_filename)
     if not save_path and os.path.exists(temp_video_filename):
         os.remove(temp_video_filename)
+    if temp_remote_filename and os.path.exists(temp_remote_filename):
+        os.remove(temp_remote_filename)
 
     if len(video_content) > 50 * 1024 * 1000:
         raise ValueError('Video file is too big')
@@ -217,7 +248,7 @@ if __name__ == '__main__':
               (len(video_data), len(thumbnail_data), size[0], size[1], duration))
 
     if args.video:
-        print('Example 2: Resize video to aspect ratio 1, duration 10s')
+        print('Example 1: Resize video to aspect ratio 1, duration 10s')
         video_data, size, duration, thumbnail_data = prepare_video(
             args.video, aspect_ratios=1.0, max_duration=10,
             save_path='example1.mp4')
@@ -225,8 +256,7 @@ if __name__ == '__main__':
 
         print('Example 2: Resize video to no greater than 480x480')
         video_data, size, duration, thumbnail_data = prepare_video(
-            args.video, thumbnail_frame_ts=5.0, max_size=(480, 480),
-            save_path='example2.mp4')
+            args.video, thumbnail_frame_ts=2.0, max_size=(480, 480))
         print_vid_info(video_data, size, duration, thumbnail_data)
 
         print('Example 3: Leave video intact and speed up retrieval')
