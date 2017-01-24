@@ -2,6 +2,10 @@
 
 An extension module to [instagram\_private\_api](https://github.com/ping/instagram_private_api) to help with common tasks such as posting a photo or video.
 
+![](https://img.shields.io/badge/Python-2.7-green.svg)
+![](https://img.shields.io/badge/Python-3.5-green.svg)
+![License](https://img.shields.io/badge/license-MIT_License-blue.svg)
+
 ## Features
 
 1. [``media``](#media): Edits a photo/video so that it complies with Instagram's requirements by:
@@ -34,7 +38,10 @@ $ pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git
 ```
 
 ### Important: Patching MoviePy
-[MoviePy](https://github.com/Zulko/moviepy) (as of [``d4c9c37``](https://github.com/Zulko/moviepy/tree/d4c9c37bc88261d8ed8b5d9b7c317d13b2cdf62e) or defined in [requirements.txt](requirements.txt)/[setup.py](setup.py)) requires an unmerged [patch (#345)](https://github.com/Zulko/moviepy/pull/345) to work with this extension because Instagram videos require the AAC audio codec. Make sure you manually patch your copy of MoviePy by [**adding ``aac`` here**](https://github.com/Zulko/moviepy/pull/345/files#diff-9c472ac33610ecc9a98fad3cce9636c2L140) in ``moviepy/tools.py`` if [#345](https://github.com/Zulko/moviepy/pull/345) has not been merged.
+[MoviePy](https://github.com/Zulko/moviepy) (as of [``d4c9c37``](https://github.com/Zulko/moviepy/tree/d4c9c37bc88261d8ed8b5d9b7c317d13b2cdf62e) or defined in [requirements.txt](requirements.txt)/[setup.py](setup.py)) requires a few unmerged patches to work with this extension
+
+1. [PR #345](https://github.com/Zulko/moviepy/pull/345) because Instagram videos require the AAC audio codec. Patch your copy of MoviePy by [**adding ``aac`` here**](https://github.com/Zulko/moviepy/pull/345/files#diff-9c472ac33610ecc9a98fad3cce9636c2L140) in ``moviepy/tools.py`` if [#345](https://github.com/Zulko/moviepy/pull/345) has not been merged.
+2. [PR #384](https://github.com/Zulko/moviepy/pull/384) for Python 3 compatibility. Patch your copy of MovePy by [editing ``moviepy/audio/io/readers.py``](https://github.com/Zulko/moviepy/pull/384/files#diff-b2d21c12f458d0b629f706421dbf526cL122) if [#384](https://github.com/Zulko/moviepy/pull/384) has not been merged.
 
 ## Usage
 

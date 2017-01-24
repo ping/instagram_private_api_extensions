@@ -149,7 +149,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     vid_filename = os.path.basename(vid)
     ts = int(time.time())
     m = hashlib.md5()
-    m.update('%s.%d' % (vid_filename, int(os.path.getmtime(vid))))
+    m.update(('%s.%d' % (vid_filename, int(os.path.getmtime(vid)))).encode('utf-8'))
 
     temp_video_filename = '%s_%s_%d.tmp.mp4' % (vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
     if save_path:
@@ -169,15 +169,23 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     video_size = vidclip.size
     del vidclip      # clear it out
 
-    with open(temp_thumbnail_filename, 'r') as thumb_data:
-        video_thumbnail_content = thumb_data.read()
+    try:
+        with open(temp_thumbnail_filename, mode='r', errors='ignore') as thumb_data:
+            video_thumbnail_content = thumb_data.read()
+    except TypeError:
+        with open(temp_thumbnail_filename, mode='r') as thumb_data:
+            video_thumbnail_content = thumb_data.read()
 
     if vid_is_modified or not skip_reencoding:
         vid_filepath = temp_video_filename if not save_path else save_path
     else:
         vid_filepath = vid
-    with open(vid_filepath, 'r') as vid_data:
-        video_content = vid_data.read()
+    try:
+        with open(vid_filepath, mode='r', errors='ignore') as vid_data:
+            video_content = vid_data.read()
+    except TypeError:
+        with open(vid_filepath, mode='r') as vid_data:
+            video_content = vid_data.read()
 
     # Delete temp files
     if os.path.exists(temp_thumbnail_filename):
