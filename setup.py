@@ -20,8 +20,7 @@ setup(
     keywords='instagram private api extensions',
     description='An extension module for https://github.com/ping/instagram_private_api',
     packages=packages,
-    install_requires=['moviepy==0', 'Pillow>=4.0.0'],
-    dependency_links=['https://github.com/Zulko/moviepy/tarball/d4c9c37#egg=moviepy-0'],
+    install_requires=['moviepy==0.2.2.13', 'Pillow>=4.0.0'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
