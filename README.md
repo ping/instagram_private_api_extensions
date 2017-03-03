@@ -15,7 +15,9 @@ An extension module to [instagram\_private\_api](https://github.com/ping/instagr
     * Clipping the video duration if it is too long
     * Changing the format/encoding
 
-2. [``pagination``](#pagination): Page through an api call such as ``api.user_feed()``. 
+2. [``pagination``](#pagination): Page through an api call such as ``api.user_feed()``.
+
+3. [``live``](#live): Download an ongoing IG live stream. Requires ffmpeg installed.
 
 ## Install
 
@@ -82,4 +84,27 @@ for results in pagination.page(api.user_feed, args={'user_id': '123456'}):
     if results.get('items'):
         items.extend(results['items'])
 print(len(items))
+```
+
+### [Live](instagram_private_api_extensions/live)
+
+```python
+from instagram_private_api_extensions import live
+
+broadcast = api.broadcast_info('1234567890')
+
+dl = live.Downloader(
+    mpd=broadcast['dash_playback_url'],
+    output_dir='output_%s/' % str(broadcast['id']))
+try:
+    dl.run()
+except KeyboardInterrupt:
+    if not dl.is_aborted:
+        dl.is_aborted = True
+        dl.stop()
+finally:
+    # combine the downloaded files
+    # Requires ffmpeg installed. If you prefer to use avconv
+    # for example, omit this step and do it manually
+    dl.stitch('my_video.mp4')
 ```
