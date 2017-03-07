@@ -86,7 +86,7 @@ for results in pagination.page(api.user_feed, args={'user_id': '123456'}):
 print(len(items))
 ```
 
-### [Live](instagram_private_api_extensions/live)
+### [Live](instagram_private_api_extensions/live.py)
 
 ```python
 from instagram_private_api_extensions import live
