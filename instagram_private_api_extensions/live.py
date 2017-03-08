@@ -11,17 +11,10 @@ import shutil
 import subprocess
 from socket import timeout
 from ssl import SSLError
-try:
-    # python 2.x
-    from urllib2 import urlopen, HTTPError, URLError
-    from urlparse import urljoin
-    from httplib import HTTPException
-except ImportError:
-    # python 3.x
-    from urllib.request import urlopen
-    from urllib.error import HTTPError, URLError
-    from urllib.parse import urljoin
-    from http.client import HTTPException
+
+from .compat import (
+    compat_urllib_error, compat_urllib_request,
+    compat_urlparse, compat_http_client)
 
 
 logger = logging.getLogger(__file__)
@@ -69,15 +62,15 @@ class Downloader(object):
                     logger.debug('Sleeping for %ds' % wait)
                     time.sleep(wait)
 
-            except HTTPError as e:
+            except compat_urllib_error.HTTPError as e:
                 logger.error(e)
                 if e.code >= 500:
                     time.sleep(5)
                 else:
                     self.is_aborted = True
-            except URLError as e:
+            except compat_urllib_error.URLError as e:
                 logger.warn(e.reason)
-            except (HTTPException, timeout, SSLError) as e:
+            except (compat_http_client.HTTPException, timeout, SSLError) as e:
                 logger.warn('Error downloading %s: %s. Retrying...' % (self.mpd, e))
 
         self.stop()
@@ -100,7 +93,7 @@ class Downloader(object):
 
     def _download_mpd(self):
         logger.debug('Requesting %s' % self.mpd)
-        res = urlopen(self.mpd, timeout=5)
+        res = compat_urllib_request.urlopen(self.mpd, timeout=5)
         xml_text = res.read().decode('utf8')
 
         broadcast_ended = res.info().get('X-FB-Video-Broadcast-Ended')
@@ -176,7 +169,7 @@ class Downloader(object):
                     if mobj:
                         self.stream_id = mobj.group('id')
 
-                init_segment_url = urljoin(self.mpd, init_segment)
+                init_segment_url = compat_urlparse.urljoin(self.mpd, init_segment)
                 self._extract(
                     os.path.basename(init_segment),
                     init_segment_url,
@@ -188,7 +181,7 @@ class Downloader(object):
                 for seg in segments:
                     seg_filename = media_name.replace(
                         '$Time$', seg.attrib.get('t')).replace('$RepresentationID$', representation_id)
-                    segment_url = urljoin(self.mpd, seg_filename)
+                    segment_url = compat_urlparse.urljoin(self.mpd, seg_filename)
                     self._extract(
                         os.path.basename(seg_filename),
                         segment_url,
@@ -211,11 +204,12 @@ class Downloader(object):
         retry_attempts = 2
         for i in range(1, retry_attempts + 1):
             try:
-                res = urlopen(target, timeout=15)
+                res = compat_urllib_request.urlopen(target, timeout=15)
                 with open(output, 'wb') as f:
                     f.write(res.read())
                 break
-            except (HTTPError, URLError, HTTPException, timeout, SSLError) as e:
+            except (compat_urllib_error.HTTPError, compat_urllib_error.URLError,
+                    compat_http_client.HTTPException, timeout, SSLError) as e:
                 if i < retry_attempts:
                     logger.warn('Error downloading %s: %s. Retrying...' % (target, e))
                 else:
@@ -280,11 +274,11 @@ class Downloader(object):
                 '-i', audio_stream,
                 '-i', video_stream,
                 '-c:v', 'copy', '-c:a', 'copy', output_filename]
-            logger.debug(' '.join(cmd))
             exit_code = subprocess.call(cmd)
 
             if exit_code:
                 logger.error('ffmpeg exited with the code: %s' % exit_code)
+                logger.error('Command: %s' % ' '.join(cmd))
 
             if cleartempfiles and not exit_code:
                 for f in glob.glob(os.path.join(self.output_dir, '%s-*.*' % self.stream_id)):

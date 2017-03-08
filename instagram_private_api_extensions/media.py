@@ -3,16 +3,11 @@ import time
 import hashlib
 import io
 import re
-try:
-    # python 2.x
-    from urllib2 import urlopen
-    from urllib import urlretrieve
-except ImportError:
-    # python 3.x
-    from urllib.request import urlopen, urlretrieve
 from PIL import Image
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.fx.all import resize, crop
+
+from .compat import compat_urllib_request, compat_urlretrieve
 
 
 def calc_resize(max_size, curr_size):
@@ -93,7 +88,7 @@ def prepare_image(img, max_size=(1280, 1280),
     :return:
     """
     if is_remote(img):
-        res = urlopen(img)
+        res = compat_urllib_request.urlopen(img)
         im = Image.open(res)
     else:
         im = Image.open(img)
@@ -147,7 +142,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         m.update(vid.encode('utf-8'))
         temp_remote_filename = '%s_%s_%d.tmp.mp4' % (
             os.path.basename(vid).replace('.', ''), m.hexdigest()[:15], int(time.time()))
-        urlretrieve(vid, filename=temp_remote_filename)
+        compat_urlretrieve(vid, filename=temp_remote_filename)
         vidclip = VideoFileClip(temp_remote_filename)
         vid = temp_remote_filename
     else:
