@@ -274,8 +274,9 @@ class Downloader(object):
                         raise e
 
         if not skipffmpeg:
+            ffmpeg_binary = os.getenv('FFMPEG_BINARY', 'ffmpeg')
             cmd = [
-                'ffmpeg', '-loglevel', 'panic',
+                ffmpeg_binary, '-loglevel', 'panic',
                 '-i', audio_stream,
                 '-i', video_stream,
                 '-c:v', 'copy', '-c:a', 'copy', output_filename]
