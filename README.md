@@ -95,7 +95,8 @@ broadcast = api.broadcast_info('1234567890')
 
 dl = live.Downloader(
     mpd=broadcast['dash_playback_url'],
-    output_dir='output_%s/' % str(broadcast['id']))
+    output_dir='output_%s/' % str(broadcast['id']),
+    user_agent=api.user_agent)
 try:
     dl.run()
 except KeyboardInterrupt:
