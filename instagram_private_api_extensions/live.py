@@ -11,6 +11,8 @@ import shutil
 import subprocess
 from socket import timeout
 from ssl import SSLError
+import gzip
+from io import BytesIO
 
 from .compat import (
     compat_urllib_error, compat_urllib_request,
@@ -25,7 +27,10 @@ MPD_NAMESPACE = {'mpd': 'urn:mpeg:dash:schema:mpd:2011'}
 
 class Downloader(object):
 
-    def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False):
+    USER_AGENT = 'Instagram 10.9.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
+                 'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
+
+    def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None):
         """
 
         :param mpd: URL to mpd
@@ -50,6 +55,7 @@ class Downloader(object):
         self.is_aborted = False
         self.singlethreaded = singlethreaded
         self.stream_id = ''
+        self.user_agent = user_agent or self.USER_AGENT
 
     def run(self):
         """Begin downloading"""
@@ -93,8 +99,17 @@ class Downloader(object):
 
     def _download_mpd(self):
         logger.debug('Requesting %s' % self.mpd)
-        res = compat_urllib_request.urlopen(self.mpd, timeout=5)
-        xml_text = res.read().decode('utf8')
+        req = compat_urllib_request.Request(self.mpd, headers={
+            'User-Agent': self.user_agent,
+            'Accept': '*/*',
+            'Accept-Encoding': 'gzip',
+        })
+        res = compat_urllib_request.urlopen(req, timeout=5)
+        if res.info().get('Content-Encoding') == 'gzip':
+            buf = BytesIO(res.read())
+            xml_text = gzip.GzipFile(fileobj=buf).read().decode('utf8')
+        else:
+            xml_text = res.read().decode('utf8')
 
         broadcast_ended = res.info().get('X-FB-Video-Broadcast-Ended')
         if broadcast_ended:
@@ -204,7 +219,11 @@ class Downloader(object):
         retry_attempts = 2
         for i in range(1, retry_attempts + 1):
             try:
-                res = compat_urllib_request.urlopen(target, timeout=15)
+                req = compat_urllib_request.Request(target, headers={
+                    'User-Agent': self.user_agent,
+                    'Accept': '*/*',
+                })
+                res = compat_urllib_request.urlopen(req, timeout=15)
                 with open(output, 'wb') as f:
                     f.write(res.read())
                 break
