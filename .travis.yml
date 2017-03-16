@@ -5,10 +5,12 @@ python:
   - "3.5"
 
 install:
+  - pip install -r requirements.txt
   - pip install flake8
 
 script:
-- flake8 --max-line-length=120 instagram_private_api_extensions --exclude=./instagram_private_api_extensions/compat.py
+  - flake8 --max-line-length=120 instagram_private_api_extensions --exclude=./instagram_private_api_extensions/compat.py
+  - python -m unittest discover -s tests -v
 
 branches:
   only:

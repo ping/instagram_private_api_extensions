@@ -4,8 +4,6 @@ import hashlib
 import io
 import re
 from PIL import Image
-from moviepy.video.io.VideoFileClip import VideoFileClip
-from moviepy.video.fx.all import resize, crop
 
 from .compat import compat_urllib_request, compat_urlretrieve
 
@@ -133,6 +131,8 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         if there are no modifications required. Default: False.
     :return:
     """
+    from moviepy.video.io.VideoFileClip import VideoFileClip
+    from moviepy.video.fx.all import resize, crop
 
     vid_is_modified = False
 
