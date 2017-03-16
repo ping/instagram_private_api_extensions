@@ -5,6 +5,7 @@ An extension module to [instagram\_private\_api](https://github.com/ping/instagr
 ![](https://img.shields.io/badge/Python-2.7-green.svg)
 ![](https://img.shields.io/badge/Python-3.5-green.svg)
 ![License](https://img.shields.io/badge/license-MIT_License-blue.svg)
+[![Build](https://img.shields.io/travis/ping/instagram_private_api_extensions.svg)](https://travis-ci.org/ping/instagram_private_api_extensions)
 
 ## Features
 
