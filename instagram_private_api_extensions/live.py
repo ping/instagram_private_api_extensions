@@ -30,7 +30,7 @@ class Downloader(object):
     USER_AGENT = 'Instagram 10.9.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
                  'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
 
-    def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None):
+    def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None, **kwargs):
         """
 
         :param mpd: URL to mpd
@@ -56,6 +56,8 @@ class Downloader(object):
         self.singlethreaded = singlethreaded
         self.stream_id = ''
         self.user_agent = user_agent or self.USER_AGENT
+        self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or 2
+        self.download_timeout = kwargs.pop('download_timeout', None) or 15
 
     def run(self):
         """Begin downloading"""
@@ -104,7 +106,7 @@ class Downloader(object):
             'Accept': '*/*',
             'Accept-Encoding': 'gzip',
         })
-        res = compat_urllib_request.urlopen(req, timeout=5)
+        res = compat_urllib_request.urlopen(req, timeout=self.mpd_download_timeout)
         if res.info().get('Content-Encoding') == 'gzip':
             buf = BytesIO(res.read())
             xml_text = gzip.GzipFile(fileobj=buf).read().decode('utf8')
@@ -223,7 +225,7 @@ class Downloader(object):
                     'User-Agent': self.user_agent,
                     'Accept': '*/*',
                 })
-                res = compat_urllib_request.urlopen(req, timeout=15)
+                res = compat_urllib_request.urlopen(req, timeout=self.download_timeout)
                 with open(output, 'wb') as f:
                     f.write(res.read())
                 break
