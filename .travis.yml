@@ -20,6 +20,7 @@ install:
 
 script:
   - flake8 --max-line-length=120 instagram_private_api_extensions --exclude=./instagram_private_api_extensions/compat.py
+  - python -m compileall -q instagram_private_api_extensions tests
   - python -m unittest discover -s tests -v
 
 branches:
