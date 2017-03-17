@@ -10,6 +10,7 @@ before_install:
   - sudo apt-get -y update
   - sudo apt-get install -y ffmpeg
   - mkdir media
+  - curl -s -o 'media/test.jpg' 'https://c2.staticflickr.com/6/5267/5669212075_039ed45bff_z.jpg'
   - curl -s -o 'media/test.mp4' 'https://raw.githubusercontent.com/johndyer/mediaelement-files/master/big_buck_bunny.mp4'
 
 install:
