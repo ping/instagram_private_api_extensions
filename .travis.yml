@@ -15,13 +15,12 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install flake8
+  # Patch PR 345 https://github.com/Zulko/moviepy/pull/345
+  - curl -s -o "$VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/moviepy/tools.py" 'https://raw.githubusercontent.com/jeromegrosse/moviepy/00e911a617eaff63f8e87c6e069d087a8ff6186e/moviepy/tools.py'
 
 script:
   - flake8 --max-line-length=120 instagram_private_api_extensions --exclude=./instagram_private_api_extensions/compat.py
   - python -m unittest discover -s tests -v
-  - ffmpeg -version
-  - echo "$VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/"
-  - ls "$VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages/"
 
 branches:
   only:
