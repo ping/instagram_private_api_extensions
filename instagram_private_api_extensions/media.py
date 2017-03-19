@@ -73,11 +73,12 @@ def is_remote(media):
     return False
 
 
-def prepare_image(img, max_size=(1280, 1280),
+def prepare_image(img, max_size=(1080, 1350),
                   aspect_ratios=(4.0 / 5.0, 90.0 / 47.0),
                   save_path=None):
     """
-    Prepares an image file for posting
+    Prepares an image file for posting.
+    Defaults for size and aspect ratio from https://help.instagram.com/1469029763400082
 
     :param img: file path
     :param max_size: tuple of (max_width,  max_height)
@@ -113,13 +114,14 @@ def prepare_image(img, max_size=(1280, 1280),
 
 
 def prepare_video(vid, thumbnail_frame_ts=0.0,
-                  max_size=(640, 1137),
+                  max_size=(1080, 1350),
                   aspect_ratios=(4.0 / 5.0, 90.0 / 47.0),
                   max_duration=60.0,
                   save_path=None,
                   skip_reencoding=False):
     """
-    Prepares a video file for posting
+    Prepares a video file for posting.
+    Defaults for size and aspect ratio from https://help.instagram.com/1469029763400082
 
     :param vid: file path
     :param thumbnail_frame_ts: the frame of clip corresponding to time t (in seconds) to be used as the thumbnail
