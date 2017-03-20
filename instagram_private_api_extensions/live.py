@@ -334,7 +334,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt as e:
         logger.info('Interrupted')
         if not dl.is_aborted:
-            dl.is_aborted = True
             dl.stop()
     finally:
         if args.s:
