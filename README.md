@@ -65,8 +65,9 @@ vid_data, vid_size, vid_duration, vid_thumbnail = media.prepare_video(
 api.post_video(vid_data, vid_size, vid_duration, vid_thumbnail)
 
 # post a photo story
-photo_data, photo_size = media.prepare_image('pathto/my_photo.jpg')
-api.post_photo_story(photo_data, photo_size, aspect_ratios=api.reel_ratios())
+photo_data, photo_size = media.prepare_image(
+    'pathto/my_photo.jpg', aspect_ratios=api.reel_ratios())
+api.post_photo_story(photo_data, photo_size)
 
 # post a video story
 vid_data, vid_size, vid_duration, vid_thumbnail = media.prepare_video(
@@ -102,7 +103,6 @@ try:
     dl.run()
 except KeyboardInterrupt:
     if not dl.is_aborted:
-        dl.is_aborted = True
         dl.stop()
 finally:
     # combine the downloaded files
