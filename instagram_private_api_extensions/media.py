@@ -68,6 +68,7 @@ def calc_crop(aspect_ratios, curr_size):
 
 
 def is_remote(media):
+    """Detect is media specified is a url"""
     if re.match(r'^https?://', media):
         return True
     return False
@@ -102,12 +103,14 @@ def prepare_image(img, max_size=(1080, 1350),
             im = im.crop(crop_box)
 
     if im.mode != 'RGB':
+        # Removes transparency (alpha)
         im = im.convert('RGBA')
         im2 = Image.new('RGB', im.size, (255, 255, 255))
         im2.paste(im, (0, 0), im)
         im = im2
     if save_path:
         im.save(save_path)
+
     b = io.BytesIO()
     im.save(b, 'JPEG')
     return b.getvalue(), im.size
@@ -136,10 +139,11 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     from moviepy.video.io.VideoFileClip import VideoFileClip
     from moviepy.video.fx.all import resize, crop
 
-    vid_is_modified = False
+    vid_is_modified = False     # flag to track if re-encoding can be skipped
 
     temp_remote_filename = ''
     if is_remote(vid):
+        # Download and rename remote file
         m = hashlib.md5()
         m.update(vid.encode('utf-8'))
         temp_remote_filename = '%s_%s_%d.tmp.mp4' % (
@@ -172,11 +176,13 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
             vidclip = crop(vidclip, x1=crop_box[0], y1=crop_box[1], x2=crop_box[2], y2=crop_box[3])
             vid_is_modified = True
 
+    # Use original filename, current timestamp, vid file timestamp for temp filename generation
     vid_filename = os.path.basename(vid)
     ts = int(time.time())
     m = hashlib.md5()
     m.update(('%s.%d' % (vid_filename, int(os.path.getmtime(vid)))).encode('utf-8'))
 
+    # Temp vid filename for cases when output is not saved
     temp_video_filename = '%s_%s_%d.tmp.mp4' % (vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
     if save_path:
         if not save_path.lower().endswith('.mp4'):
@@ -184,10 +190,13 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         output_file = save_path
     else:
         output_file = temp_video_filename
+
     if vid_is_modified or not skip_reencoding:
+        # write out
         vidclip.write_videofile(
             output_file, codec='libx264', audio=True, audio_codec='aac', verbose=False)
 
+    # Temp thumbnail img filename
     temp_thumbnail_filename = '%s_%s_%d.tmp.jpg' % (vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
     vidclip.save_frame(temp_thumbnail_filename, t=thumbnail_frame_ts)
 
@@ -196,9 +205,11 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     del vidclip      # clear it out
 
     try:
+        # py3
         with open(temp_thumbnail_filename, mode='r', errors='ignore') as thumb_data:
             video_thumbnail_content = thumb_data.read()
     except TypeError:
+        # py2
         with open(temp_thumbnail_filename, mode='r') as thumb_data:
             video_thumbnail_content = thumb_data.read()
 
@@ -207,9 +218,11 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     else:
         vid_filepath = vid
     try:
+        # py3
         with open(vid_filepath, mode='r', errors='ignore') as vid_data:
             video_content = vid_data.read()
     except TypeError:
+        # py2
         with open(vid_filepath, mode='r') as vid_data:
             video_content = vid_data.read()
 

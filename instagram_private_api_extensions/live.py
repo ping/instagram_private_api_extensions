@@ -113,12 +113,15 @@ class Downloader(object):
         else:
             xml_text = res.read().decode('utf8')
 
+        # IG used to send this header when the broadcast ended.
+        # Leaving it in in case it returns.
         broadcast_ended = res.info().get('X-FB-Video-Broadcast-Ended')
         if broadcast_ended:
             logger.debug('Found X-FB-Video-Broadcast-Ended header: %s' % broadcast_ended)
             logger.info('Stream ended.')
             self.is_aborted = True
         else:
+            # Use etag to detect if the same mpd is received repeatedly
             etag = res.info().get('ETag')
             if not etag:
                 # use contents hash as psuedo etag
@@ -130,6 +133,8 @@ class Downloader(object):
                 self.duplicate_etag_count = 0
             elif etag:
                 self.duplicate_etag_count += 1
+
+            # Periodically check callback if duplicate etag is detected
             if self.duplicate_etag_count and (self.duplicate_etag_count % 5 == 0):
                 logger.warn('Duplicate etag %s detected %d time(s)' % (etag, self.duplicate_etag_count))
                 if self.callback:
@@ -159,6 +164,7 @@ class Downloader(object):
     def _process_mpd(self, mpd):
         periods = mpd.findall('mpd:Period', MPD_NAMESPACE)
         logger.debug('Found %d period(s)' % len(periods))
+        # Aaccording to specs, multiple periods are allow but IG only sends one usually
         for period in periods:
             logger.debug('Processing period %s' % period.attrib.get('id'))
             for adaptation_set in period.findall('mpd:AdaptationSet', MPD_NAMESPACE):
@@ -181,17 +187,21 @@ class Downloader(object):
 
                 init_segment = segment_template.attrib.get('initialization')
                 media_name = segment_template.attrib.get('media')
+
+                # store stream ID
                 if not self.stream_id:
                     mobj = re.search(r'\b(?P<id>[0-9]+)\-init', init_segment)
                     if mobj:
                         self.stream_id = mobj.group('id')
 
+                # download init segment
                 init_segment_url = compat_urlparse.urljoin(self.mpd, init_segment)
                 self._extract(
                     os.path.basename(init_segment),
                     init_segment_url,
                     os.path.join(self.output_dir, os.path.basename(init_segment)))
 
+                # download timeline segments
                 segment_timeline = segment_template.find('mpd:SegmentTimeline', MPD_NAMESPACE)
                 segments = segment_timeline.findall('mpd:S', MPD_NAMESPACE)
 
@@ -219,7 +229,7 @@ class Downloader(object):
 
     def _download(self, target, output):
         retry_attempts = 2
-        for i in range(1, retry_attempts + 1):
+        for i in range(1, retry_attempts + 1):      # retry mechanics
             try:
                 req = compat_urllib_request.Request(target, headers={
                     'User-Agent': self.user_agent,
@@ -260,6 +270,7 @@ class Downloader(object):
 
         with open(audio_stream, 'wb') as outfile:
             logger.debug('Assembling audio stream... %s' % audio_stream)
+            # Audio segments are named: '<stream-id>-<numeric-seq-num>.m4a'
             files = list(filter(
                 os.path.isfile,
                 glob.glob(os.path.join(self.output_dir, '%s-*.m4a' % self.stream_id))))
@@ -275,6 +286,7 @@ class Downloader(object):
 
         with open(video_stream, 'wb') as outfile:
             logger.debug('Assembling video stream... %s' % video_stream)
+            # Videos segments are named: '<stream-id>-<numeric-seq-num>.m4v'
             files = list(filter(
                 os.path.isfile,
                 glob.glob(os.path.join(self.output_dir, '%s-*.m4v' % self.stream_id))))
