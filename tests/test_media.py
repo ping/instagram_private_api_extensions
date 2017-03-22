@@ -34,6 +34,14 @@ class TestMedia(unittest.TestCase):
         self.assertLessEqual(round(ar, 2), 1.2)
         self.assertGreaterEqual(round(ar, 2), 0.8)
 
+    def test_remote_image(self):
+        image_url = 'https://c2.staticflickr.com/6/5267/5669212075_039ed45bff_z.jpg'
+        image_data, size = media.prepare_image(
+            image_url, max_size=(400, 400))
+        self.assertLessEqual(size[0], 400, 'Invalid width.')
+        self.assertLessEqual(size[1], 400, 'Invalid height.')
+        self.assertGreater(len(image_data), 0)
+
     def test_prepare_video(self):
         _, size, duration, _ = media.prepare_video(
             self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10, save_path='media/output.mp4')
