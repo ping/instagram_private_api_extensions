@@ -28,7 +28,7 @@ Get a copy of the source via git or download a [tarball](https://github.com/ping
 $ git clone git@github.com:ping/instagram_private_api_extensions.git
 ```
 
-Then install the dependencies (moviepy, pillow) required.
+Then install the dependencies (moviepy, pillow, requests) required.
 
 ```bash
 $ pip install -r requirements.txt

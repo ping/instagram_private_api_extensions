@@ -9,13 +9,9 @@ import threading
 import glob
 import shutil
 import subprocess
-from socket import timeout
-from ssl import SSLError
-from io import BytesIO
 
-from .compat import (
-    compat_urllib_error, compat_urllib_request,
-    compat_urlparse, compat_http_client)
+import requests
+from .compat import compat_urlparse
 
 
 logger = logging.getLogger(__file__)
@@ -58,13 +54,11 @@ class Downloader(object):
         self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or 2
         self.download_timeout = kwargs.pop('download_timeout', None) or 15
 
-        urlparsed = compat_urlparse.urlparse(self.mpd)
-        if urlparsed.scheme == 'https':
-            self.connection = compat_http_client.HTTPSConnection(
-                urlparsed.netloc, timeout=self.mpd_download_timeout)
-        else:
-            self.connection = compat_http_client.HTTPConnection(
-                urlparsed.netloc, timeout=self.mpd_download_timeout)
+        session = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(max_retries=2, pool_maxsize=25)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        self.session = session
 
     def run(self):
         """Begin downloading"""
@@ -77,16 +71,17 @@ class Downloader(object):
                     logger.debug('Sleeping for %ds' % wait)
                     time.sleep(wait)
 
-            except compat_urllib_error.HTTPError as e:
-                logger.error(e)
-                if e.code >= 500:
+            except requests.HTTPError as e:
+                err_msg = 'HTTPError downloading %s: %s.' % (self.mpd, e)
+                if e.response and e.response.status_code > 500:
+                    logger.warn(err_msg)
                     time.sleep(5)
                 else:
+                    logger.error(err_msg)
                     self.is_aborted = True
-            except compat_urllib_error.URLError as e:
-                logger.warn(e.reason)
-            except (compat_http_client.HTTPException, timeout, SSLError) as e:
-                logger.warn('Error downloading %s: %s. Retrying...' % (self.mpd, e))
+            except requests.ConnectionError as e:
+                # transient error maybe?
+                logger.warn('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
 
         self.stop()
 
@@ -98,7 +93,6 @@ class Downloader(object):
 
         :return:
         """
-        self.connection.close()
         self.is_aborted = True
         if not self.singlethreaded:
             logger.debug('Stopping download threads...')
@@ -109,33 +103,24 @@ class Downloader(object):
 
     def _download_mpd(self):
         logger.debug('Requesting %s' % self.mpd)
-        urlparsed = compat_urlparse.urlparse(self.mpd)
-        self.connection.request(
-            'GET',
-            urlparsed.path + '?' + urlparsed.query,
-            headers={
-                'User-Agent': self.user_agent,
-                'Accept': '*/*',
-            })
-        res = self.connection.getresponse()
+        res = self.session.get(self.mpd, headers={
+            'User-Agent': self.user_agent,
+            'Accept': '*/*',
+        }, timeout=self.mpd_download_timeout)
+        res.raise_for_status()
 
-        if res.status >= 400:
-            raise compat_urllib_error.HTTPError(
-                self.mpd, res.status, res.reason,
-                res.getheaders(), BytesIO(res.read()))
-
-        xml_text = res.read().decode('utf8')
+        xml_text = res.text
 
         # IG used to send this header when the broadcast ended.
         # Leaving it in in case it returns.
-        broadcast_ended = res.getheader('X-FB-Video-Broadcast-Ended', '')
+        broadcast_ended = res.headers.get('X-FB-Video-Broadcast-Ended', '')
         if broadcast_ended:
             logger.debug('Found X-FB-Video-Broadcast-Ended header: %s' % broadcast_ended)
             logger.info('Stream ended.')
             self.is_aborted = True
         else:
             # Use etag to detect if the same mpd is received repeatedly
-            etag = res.getheader('etag')
+            etag = res.headers.get('etag')
             if not etag:
                 # use contents hash as psuedo etag
                 m = hashlib.md5()
@@ -241,23 +226,28 @@ class Downloader(object):
             self.downloaders[identifier] = t
 
     def _download(self, target, output):
-        retry_attempts = 2
-        for i in range(1, retry_attempts + 1):      # retry mechanics
+
+        retry_attempts = 2      # custom retry for HTTPError
+        for i in range(1, retry_attempts + 1):
             try:
-                req = compat_urllib_request.Request(target, headers={
+                res = self.session.get(target, headers={
                     'User-Agent': self.user_agent,
                     'Accept': '*/*',
-                })
-                res = compat_urllib_request.urlopen(req, timeout=self.download_timeout)
+                }, timeout=self.download_timeout)
+                res.raise_for_status()
+
                 with open(output, 'wb') as f:
-                    f.write(res.read())
+                    f.write(res.content)
                 break
-            except (compat_urllib_error.HTTPError, compat_urllib_error.URLError,
-                    compat_http_client.HTTPException, timeout, SSLError) as e:
+            except requests.ConnectionError as e:
+                logger.error('ConnectionError %s: %s' % (target, e))
+                break
+            except requests.HTTPError as e:
+                err_msg = 'HTTPError %d %s: %s.' % (e.response.status_code, target, e)
                 if i < retry_attempts:
-                    logger.warn('Error downloading %s: %s. Retrying...' % (target, e))
+                    logger.warn('%s Retrying...' % err_msg)
                 else:
-                    logger.error('Error downloading %s: %s' % (target, e))
+                    logger.error(err_msg)
 
     def _get_file_index(self, filename):
         """ Extract the numbered index in filename for sorting """

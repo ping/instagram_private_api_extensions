@@ -5,7 +5,7 @@ import io
 import re
 from PIL import Image
 
-from .compat import compat_urllib_request, compat_urlretrieve
+import requests
 
 
 def calc_resize(max_size, curr_size):
@@ -88,8 +88,8 @@ def prepare_image(img, max_size=(1080, 1350),
     :return:
     """
     if is_remote(img):
-        res = compat_urllib_request.urlopen(img)
-        im = Image.open(res)
+        res = requests.get(img)
+        im = Image.open(io.BytesIO(res.content))
     else:
         im = Image.open(img)
 
@@ -148,7 +148,10 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         m.update(vid.encode('utf-8'))
         temp_remote_filename = '%s_%s_%d.tmp.mp4' % (
             os.path.basename(vid).replace('.', ''), m.hexdigest()[:15], int(time.time()))
-        compat_urlretrieve(vid, filename=temp_remote_filename)
+
+        res = requests.get(vid)
+        with open(temp_remote_filename, 'wb') as file_out:
+            file_out.write(res.content)
         vidclip = VideoFileClip(temp_remote_filename)
         vid = temp_remote_filename
     else:
