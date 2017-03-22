@@ -11,7 +11,6 @@ import shutil
 import subprocess
 from socket import timeout
 from ssl import SSLError
-import gzip
 from io import BytesIO
 
 from .compat import (
@@ -59,6 +58,14 @@ class Downloader(object):
         self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or 2
         self.download_timeout = kwargs.pop('download_timeout', None) or 15
 
+        urlparsed = compat_urlparse.urlparse(self.mpd)
+        if urlparsed.scheme == 'https':
+            self.connection = compat_http_client.HTTPSConnection(
+                urlparsed.netloc, timeout=self.mpd_download_timeout)
+        else:
+            self.connection = compat_http_client.HTTPConnection(
+                urlparsed.netloc, timeout=self.mpd_download_timeout)
+
     def run(self):
         """Begin downloading"""
         while not self.is_aborted:
@@ -91,6 +98,7 @@ class Downloader(object):
 
         :return:
         """
+        self.connection.close()
         self.is_aborted = True
         if not self.singlethreaded:
             logger.debug('Stopping download threads...')
@@ -101,28 +109,33 @@ class Downloader(object):
 
     def _download_mpd(self):
         logger.debug('Requesting %s' % self.mpd)
-        req = compat_urllib_request.Request(self.mpd, headers={
-            'User-Agent': self.user_agent,
-            'Accept': '*/*',
-            'Accept-Encoding': 'gzip',
-        })
-        res = compat_urllib_request.urlopen(req, timeout=self.mpd_download_timeout)
-        if res.info().get('Content-Encoding') == 'gzip':
-            buf = BytesIO(res.read())
-            xml_text = gzip.GzipFile(fileobj=buf).read().decode('utf8')
-        else:
-            xml_text = res.read().decode('utf8')
+        urlparsed = compat_urlparse.urlparse(self.mpd)
+        self.connection.request(
+            'GET',
+            urlparsed.path + '?' + urlparsed.query,
+            headers={
+                'User-Agent': self.user_agent,
+                'Accept': '*/*',
+            })
+        res = self.connection.getresponse()
+
+        if res.status >= 400:
+            raise compat_urllib_error.HTTPError(
+                self.mpd, res.status, res.reason,
+                res.getheaders(), BytesIO(res.read()))
+
+        xml_text = res.read().decode('utf8')
 
         # IG used to send this header when the broadcast ended.
         # Leaving it in in case it returns.
-        broadcast_ended = res.info().get('X-FB-Video-Broadcast-Ended')
+        broadcast_ended = res.getheader('X-FB-Video-Broadcast-Ended', '')
         if broadcast_ended:
             logger.debug('Found X-FB-Video-Broadcast-Ended header: %s' % broadcast_ended)
             logger.info('Stream ended.')
             self.is_aborted = True
         else:
             # Use etag to detect if the same mpd is received repeatedly
-            etag = res.info().get('ETag')
+            etag = res.getheader('etag')
             if not etag:
                 # use contents hash as psuedo etag
                 m = hashlib.md5()
