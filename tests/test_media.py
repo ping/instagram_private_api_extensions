@@ -34,6 +34,22 @@ class TestMedia(unittest.TestCase):
         self.assertLessEqual(round(ar, 2), 1.2)
         self.assertGreaterEqual(round(ar, 2), 0.8)
 
+    def test_prepare_image3(self):
+        _, size = media.prepare_image(
+            self.TEST_IMAGE_PATH, max_size=(1080, 1350), aspect_ratios=(0.8, 1.2), min_size=(640, 640))
+        self.assertLessEqual(size[0], 1080, 'Invalid width (max)')
+        self.assertLessEqual(size[1], 1350, 'Invalid height (max).')
+        self.assertGreaterEqual(size[0], 640, 'Invalid width (min)')
+        self.assertGreaterEqual(size[1], 640, 'Invalid height (min)')
+        ar = 1.0 * size[0] / size[1]
+        self.assertLessEqual(round(ar, 2), 1.2)
+        self.assertGreaterEqual(round(ar, 2), 0.8)
+
+    def test_prepare_image4(self):
+        with self.assertRaises(ValueError):
+            _, size = media.prepare_image(
+                self.TEST_IMAGE_PATH, max_size=(1080, 1350), aspect_ratios=(4.0 / 5), min_size=(1081, 640))
+
     def test_remote_image(self):
         image_url = 'https://c2.staticflickr.com/6/5267/5669212075_039ed45bff_z.jpg'
         image_data, size = media.prepare_image(
@@ -51,7 +67,7 @@ class TestMedia(unittest.TestCase):
 
     def test_prepare_video2(self):
         _, size, duration, _ = media.prepare_video(
-            self.TEST_VIDEO_PATH, max_size=(480, 480))
+            self.TEST_VIDEO_PATH, max_size=(480, 480), min_size=(0, 0))
         self.assertEqual(duration, self.TEST_VIDEO_DURATION, 'Duration changed.')
         self.assertLessEqual(size[0], 480, 'Invalid width.')
         self.assertLessEqual(size[1], 480, 'Invalid height.')
@@ -62,7 +78,7 @@ class TestMedia(unittest.TestCase):
 
     def test_prepare_video3(self):
         _, size, duration, _ = media.prepare_video(
-            self.TEST_VIDEO_PATH, max_size=None, skip_reencoding=True)
+            self.TEST_VIDEO_PATH, max_size=None, skip_reencoding=True, min_size=None)
         start_ts = time.time()
         self.assertEqual(duration, self.TEST_VIDEO_DURATION, 'Duration changed.')
         self.assertEqual(size[0], self.TEST_VIDEO_SIZE[0], 'Width changed.')

@@ -8,21 +8,36 @@ from PIL import Image
 import requests
 
 
-def calc_resize(max_size, curr_size):
+def calc_resize(max_size, curr_size, min_size=(0, 0)):
     """
     Calculate if resize is required based on the max size desired
     and the current size
 
     :param max_size: tuple of (width, height)
     :param curr_size: tuple of (width, height)
+    :param min_size: tuple of (width, height)
     :return:
     """
-    max_width, max_height = max_size
+    max_width, max_height = max_size or (0, 0)
+    min_width, min_height = min_size or (0, 0)
+
+    if (max_width and min_width > max_width) or (max_height and min_height > max_height):
+        raise ValueError('Invalid min / max sizes.')
+
     orig_width, orig_height = curr_size
-    if orig_width > max_width or orig_height > max_height:
+    if max_width and max_height and (orig_width > max_width or orig_height > max_height):
         resize_factor = min(
             1.0 * max_width / orig_width,
             1.0 * max_height / orig_height)
+        new_width = int(resize_factor * orig_width)
+        new_height = int(resize_factor * orig_height)
+        return new_width, new_height
+
+    elif min_width and min_height and (orig_width < min_width or orig_height < min_height):
+        resize_factor = max(
+            1.0 * min_width / orig_width,
+            1.0 * min_height / orig_height
+        )
         new_width = int(resize_factor * orig_width)
         new_height = int(resize_factor * orig_height)
         return new_width, new_height
@@ -76,7 +91,7 @@ def is_remote(media):
 
 def prepare_image(img, max_size=(1080, 1350),
                   aspect_ratios=(4.0 / 5.0, 90.0 / 47.0),
-                  save_path=None):
+                  save_path=None, **kwargs):
     """
     Prepares an image file for posting.
     Defaults for size and aspect ratio from https://help.instagram.com/1469029763400082
@@ -85,22 +100,25 @@ def prepare_image(img, max_size=(1080, 1350),
     :param max_size: tuple of (max_width,  max_height)
     :param aspect_ratios: single float value or tuple of (min_ratio, max_ratio)
     :param save_path: optional output file path
+    :param kwargs:
+             - **min_size**: tuple of (min_width,  min_height)
     :return:
     """
+    min_size = kwargs.pop('min_size', (320, 167))
     if is_remote(img):
         res = requests.get(img)
         im = Image.open(io.BytesIO(res.content))
     else:
         im = Image.open(img)
 
-    new_size = calc_resize(max_size, im.size)
-    if new_size:
-        im = im.resize(new_size)
-
     if aspect_ratios:
         crop_box = calc_crop(aspect_ratios, im.size)
         if crop_box:
             im = im.crop(crop_box)
+
+    new_size = calc_resize(max_size, im.size, min_size=min_size)
+    if new_size:
+        im = im.resize(new_size)
 
     if im.mode != 'RGB':
         # Removes transparency (alpha)
@@ -121,7 +139,8 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
                   aspect_ratios=(4.0 / 5.0, 90.0 / 47.0),
                   max_duration=60.0,
                   save_path=None,
-                  skip_reencoding=False):
+                  skip_reencoding=False,
+                  **kwargs):
     """
     Prepares a video file for posting.
     Defaults for size and aspect ratio from https://help.instagram.com/1469029763400082
@@ -134,11 +153,14 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     :param save_path: optional output video file path
     :param skip_reencoding: if set to True, the file will not be re-encoded
         if there are no modifications required. Default: False.
+    :param kwargs:
+         - **min_size**: tuple of (min_width,  min_height)
     :return:
     """
     from moviepy.video.io.VideoFileClip import VideoFileClip
     from moviepy.video.fx.all import resize, crop
 
+    min_size = kwargs.pop('min_size', (612, 320))
     vid_is_modified = False     # flag to track if re-encoding can be skipped
 
     temp_remote_filename = ''
@@ -167,16 +189,16 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     if thumbnail_frame_ts > vidclip.duration:
         raise ValueError('Invalid thumbnail frame')
 
-    if max_size:
-        new_size = calc_resize(max_size, vidclip.size)
-        if new_size:
-            vidclip = resize(vidclip, newsize=new_size)
-            vid_is_modified = True
-
     if aspect_ratios:
         crop_box = calc_crop(aspect_ratios, vidclip.size)
         if crop_box:
             vidclip = crop(vidclip, x1=crop_box[0], y1=crop_box[1], x2=crop_box[2], y2=crop_box[3])
+            vid_is_modified = True
+
+    if max_size or min_size:
+        new_size = calc_resize(max_size, vidclip.size, min_size=min_size)
+        if new_size:
+            vidclip = resize(vidclip, newsize=new_size)
             vid_is_modified = True
 
     # Use original filename, current timestamp, vid file timestamp for temp filename generation
