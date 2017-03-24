@@ -24,6 +24,8 @@ class Downloader(object):
 
     USER_AGENT = 'Instagram 10.9.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
                  'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
+    MPD_DOWNLOAD_TIMEOUT = 2
+    DOWNLOAD_TIMEOUT = 15
 
     def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None, **kwargs):
         """
@@ -51,8 +53,8 @@ class Downloader(object):
         self.singlethreaded = singlethreaded
         self.stream_id = ''
         self.user_agent = user_agent or self.USER_AGENT
-        self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or 2
-        self.download_timeout = kwargs.pop('download_timeout', None) or 15
+        self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or self.MPD_DOWNLOAD_TIMEOUT
+        self.download_timeout = kwargs.pop('download_timeout', None) or self.DOWNLOAD_TIMEOUT
 
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(max_retries=2, pool_maxsize=25)
