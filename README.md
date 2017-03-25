@@ -110,3 +110,6 @@ finally:
     # for example, omit this step and do it manually
     dl.stitch('my_video.mp4')
 ```
+
+## Support
+Make sure to review the [contributing documentation](CONTRIBUTING.md) before submitting an issue report or pull request.
