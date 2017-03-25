@@ -305,7 +305,9 @@ class Downloader(object):
                         logger.error(e)
                         raise e
 
+        exit_code = 0
         if not skipffmpeg:
+            # use ffmpeg_binary path in env if available
             ffmpeg_binary = os.getenv('FFMPEG_BINARY', 'ffmpeg')
             cmd = [
                 ffmpeg_binary, '-loglevel', 'panic',
@@ -318,9 +320,15 @@ class Downloader(object):
                 logger.error('ffmpeg exited with the code: %s' % exit_code)
                 logger.error('Command: %s' % ' '.join(cmd))
 
-            if cleartempfiles and not exit_code:
-                for f in glob.glob(os.path.join(self.output_dir, '%s-*.*' % self.stream_id)):
-                    os.remove(f)
+        if cleartempfiles and not exit_code:
+            # Specifically only remove this stream's temp files
+            for f in glob.glob(os.path.join(self.output_dir, '%s-*.*' % self.stream_id)):
+                os.remove(f)
+
+            # Don't del source*.tmp files if not using ffmpeg
+            # so that user can still use the source* files with another
+            # tool such as avconv
+            if not skipffmpeg:
                 os.remove(audio_stream)
                 os.remove(video_stream)
 
