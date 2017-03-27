@@ -26,6 +26,7 @@ class Downloader(object):
                  'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
     MPD_DOWNLOAD_TIMEOUT = 2
     DOWNLOAD_TIMEOUT = 15
+    DUPLICATE_ETAG_RETRY = 30
 
     def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None, **kwargs):
         """
@@ -55,6 +56,7 @@ class Downloader(object):
         self.user_agent = user_agent or self.USER_AGENT
         self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or self.MPD_DOWNLOAD_TIMEOUT
         self.download_timeout = kwargs.pop('download_timeout', None) or self.DOWNLOAD_TIMEOUT
+        self.duplicate_etag_retry = kwargs.pop('duplicate_etag_retry', None) or self.DUPLICATE_ETAG_RETRY
 
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(max_retries=2, pool_maxsize=25)
@@ -147,7 +149,7 @@ class Downloader(object):
                     except Exception as e:
                         logger.warn('Error from callback: %s' % str(e))
             # Final hard abort
-            elif self.duplicate_etag_count >= 30:
+            elif self.duplicate_etag_count >= self.duplicate_etag_retry:
                 logger.info('Stream likely ended (duplicate etag/hash detected).')
                 self.is_aborted = True
 
