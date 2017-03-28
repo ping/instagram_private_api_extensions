@@ -11,7 +11,11 @@ import shutil
 import subprocess
 
 import requests
-from .compat import compat_urlparse
+try:
+    from .compat import compat_urlparse
+except ValueError:
+    # To allow running in terminal
+    from compat import compat_urlparse
 
 
 logger = logging.getLogger(__file__)
@@ -63,6 +67,9 @@ class Downloader(object):
         session.mount('http://', adapter)
         session.mount('https://', adapter)
         self.session = session
+
+        # to store the duration of the initial buffered sgements available
+        self.initial_buffered_duration = 0.0
 
     def run(self):
         """Begin downloading"""
@@ -189,6 +196,7 @@ class Downloader(object):
 
                 init_segment = segment_template.attrib.get('initialization')
                 media_name = segment_template.attrib.get('media')
+                timescale = int(segment_template.attrib.get('timescale'))
 
                 # store stream ID
                 if not self.stream_id:
@@ -207,7 +215,9 @@ class Downloader(object):
                 segment_timeline = segment_template.find('mpd:SegmentTimeline', MPD_NAMESPACE)
                 segments = segment_timeline.findall('mpd:S', MPD_NAMESPACE)
 
+                buffered_duration = 0
                 for seg in segments:
+                    buffered_duration += int(seg.attrib.get('d'))
                     seg_filename = media_name.replace(
                         '$Time$', seg.attrib.get('t')).replace('$RepresentationID$', representation_id)
                     segment_url = compat_urlparse.urljoin(self.mpd, seg_filename)
@@ -215,6 +225,9 @@ class Downloader(object):
                         os.path.basename(seg_filename),
                         segment_url,
                         os.path.join(self.output_dir, os.path.basename(seg_filename)))
+                if not self.initial_buffered_duration:
+                    self.initial_buffered_duration = float(buffered_duration) / timescale
+                    logger.debug('Initial buffered duration: %s' % self.initial_buffered_duration)
 
     def _extract(self, identifier, target, output):
         if identifier in self.downloaders:
