@@ -71,6 +71,9 @@ class Downloader(object):
         # to store the duration of the initial buffered sgements available
         self.initial_buffered_duration = 0.0
 
+        # custom ffmpeg binary path, fallback to ffmpeg_binary path in env if available
+        self.ffmpeg_binary = kwargs.pop('ffmpeg_binary', None) or os.getenv('FFMPEG_BINARY', 'ffmpeg')
+
     def run(self):
         """Begin downloading"""
         while not self.is_aborted:
@@ -322,10 +325,8 @@ class Downloader(object):
 
         exit_code = 0
         if not skipffmpeg:
-            # use ffmpeg_binary path in env if available
-            ffmpeg_binary = os.getenv('FFMPEG_BINARY', 'ffmpeg')
             cmd = [
-                ffmpeg_binary, '-loglevel', 'panic',
+                self.ffmpeg_binary, '-loglevel', 'panic',
                 '-i', audio_stream,
                 '-i', video_stream,
                 '-c:v', 'copy', '-c:a', 'copy', output_filename]
