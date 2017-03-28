@@ -184,7 +184,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
 
     if vidclip.duration > max_duration * 1.0:
         vidclip = vidclip.subclip(0, max_duration)
-        vid_is_modified = False
+        vid_is_modified = True
 
     if thumbnail_frame_ts > vidclip.duration:
         raise ValueError('Invalid thumbnail frame')
@@ -271,6 +271,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Demo media.py')
     parser.add_argument('-i', '--image', dest='image', type=str)
     parser.add_argument('-v', '--video', dest='video', type=str)
+    parser.add_argument('-video-story', dest='videostory', type=str)
 
     args = parser.parse_args()
 
@@ -297,4 +298,11 @@ if __name__ == '__main__':
         print('Example 3: Leave video intact and speed up retrieval')
         video_data, size, duration, thumbnail_data = prepare_video(
             args.video, max_size=None, skip_reencoding=True)
+        print_vid_info(video_data, size, duration, thumbnail_data)
+
+    if args.videostory:
+        print('Generate a video suitable for posting as a story')
+        video_data, size, duration, thumbnail_data = prepare_video(
+            args.videostory, aspect_ratios=(3.0/4), max_duration=14.9,
+            min_size=(612, 612), max_size=(1080, 1080), save_path='story.mp4')
         print_vid_info(video_data, size, duration, thumbnail_data)
