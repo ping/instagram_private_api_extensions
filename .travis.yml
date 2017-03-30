@@ -10,6 +10,12 @@ before_install:
   - sudo add-apt-repository -y ppa:mc3man/trusty-media
   - sudo apt-get -y update
   - sudo apt-get install -y ffmpeg
+  # Download mpd for live testing
+  - curl -s -L -o mpdstub.tar.gz 'https://drive.google.com/uc?export=download&id=0B7NFCwvW5pc3Y0ZTQkUyV3NaSEU'
+  - mkdir mpdstub && tar -xzf mpdstub.tar.gz -C mpdstub/
+  - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '3' ]]; then ((cd mpdstub && python -m http.server 8000) &); fi
+  - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '2' ]]; then ((cd mpdstub && python -m SimpleHTTPServer 8000);) fi
+  # Download media files for media testing
   - mkdir media
   - curl -s -o 'media/test.jpg' 'https://c2.staticflickr.com/6/5267/5669212075_039ed45bff_z.jpg'
   - curl -s -o 'media/test.mp4' 'https://raw.githubusercontent.com/johndyer/mediaelement-files/master/big_buck_bunny.mp4'
