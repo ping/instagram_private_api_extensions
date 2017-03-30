@@ -31,6 +31,7 @@ class Downloader(object):
     MPD_DOWNLOAD_TIMEOUT = 2
     DOWNLOAD_TIMEOUT = 15
     DUPLICATE_ETAG_RETRY = 30
+    MAX_CONNECTION_ERROR_RETRIES = 10
 
     def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None, **kwargs):
         """
@@ -76,9 +77,11 @@ class Downloader(object):
 
     def run(self):
         """Begin downloading"""
+        connection_retries_count = 0
         while not self.is_aborted:
             try:
                 mpd, wait = self._download_mpd()
+                connection_retries_count = 0    # reset count
 
                 self._process_mpd(mpd)
                 if wait:
@@ -95,7 +98,12 @@ class Downloader(object):
                     self.is_aborted = True
             except requests.ConnectionError as e:
                 # transient error maybe?
-                logger.warn('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
+                connection_retries_count += 1
+                if connection_retries_count <= self.MAX_CONNECTION_ERROR_RETRIES:
+                    logger.warn('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
+                else:
+                    logger.error('ConnectionError downloading %s: %s.' % (self.mpd, e))
+                    self.is_aborted = True
 
         self.stop()
 
