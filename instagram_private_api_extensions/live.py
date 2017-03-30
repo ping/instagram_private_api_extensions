@@ -31,7 +31,7 @@ class Downloader(object):
     MPD_DOWNLOAD_TIMEOUT = 2
     DOWNLOAD_TIMEOUT = 15
     DUPLICATE_ETAG_RETRY = 30
-    MAX_CONNECTION_ERROR_RETRIES = 10
+    MAX_CONNECTION_ERROR_RETRY = 10
 
     def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None, **kwargs):
         """
@@ -99,7 +99,7 @@ class Downloader(object):
             except requests.ConnectionError as e:
                 # transient error maybe?
                 connection_retries_count += 1
-                if connection_retries_count <= self.MAX_CONNECTION_ERROR_RETRIES:
+                if connection_retries_count <= self.MAX_CONNECTION_ERROR_RETRY:
                     logger.warn('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
                 else:
                     logger.error('ConnectionError downloading %s: %s.' % (self.mpd, e))
@@ -157,7 +157,7 @@ class Downloader(object):
             if not etag:
                 # use contents hash as psuedo etag
                 m = hashlib.md5()
-                m.update(xml_text)
+                m.update(xml_text.encode('utf-8'))
                 etag = m.hexdigest()
             if etag and etag != self.last_etag:
                 self.last_etag = etag
