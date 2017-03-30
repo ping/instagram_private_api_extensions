@@ -128,9 +128,20 @@ class Downloader(object):
         # IG used to send this header when the broadcast ended.
         # Leaving it in in case it returns.
         broadcast_ended = res.headers.get('X-FB-Video-Broadcast-Ended', '')
+        # Use the cache-control header as indicator that stream has ended
+        cache_control = res.headers.get('Cache-Control', '')
+        mobj = re.match(r'max\-age=(?P<age>[0-9]+)', cache_control)
+        if mobj:
+            max_age = int(mobj.group('age'))
+        else:
+            max_age = 0
+
         if broadcast_ended:
             logger.debug('Found X-FB-Video-Broadcast-Ended header: %s' % broadcast_ended)
             logger.info('Stream ended.')
+            self.is_aborted = True
+        elif max_age > 1:
+            logger.info('Stream ended (cache-control: %s).' % cache_control)
             self.is_aborted = True
         else:
             # Use etag to detect if the same mpd is received repeatedly
@@ -184,9 +195,11 @@ class Downloader(object):
                 # sort representations by quality and pick best one
                 representations = sorted(
                     representations,
-                    key=lambda rep: (int(rep.attrib.get('bandwidth', '0')) or
-                                     rep.attrib.get('FBQualityLabel') or
-                                     int(rep.attrib.get('audioSamplingRate', '0'))),
+                    key=lambda rep: (
+                        (int(rep.attrib.get('width', '0')) * int(rep.attrib.get('height', '0'))) or
+                        int(rep.attrib.get('bandwidth', '0')) or
+                        rep.attrib.get('FBQualityLabel') or
+                        int(rep.attrib.get('audioSamplingRate', '0'))),
                     reverse=True)
                 representation = representations[0]
                 representation_id = representation.attrib.get('id', '')
