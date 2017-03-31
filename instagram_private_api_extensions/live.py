@@ -26,7 +26,7 @@ MPD_NAMESPACE = {'mpd': 'urn:mpeg:dash:schema:mpd:2011'}
 
 class Downloader(object):
 
-    USER_AGENT = 'Instagram 10.9.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
+    USER_AGENT = 'Instagram 10.14.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
                  'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
     MPD_DOWNLOAD_TIMEOUT = 2
     DOWNLOAD_TIMEOUT = 15
@@ -62,6 +62,8 @@ class Downloader(object):
         self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or self.MPD_DOWNLOAD_TIMEOUT
         self.download_timeout = kwargs.pop('download_timeout', None) or self.DOWNLOAD_TIMEOUT
         self.duplicate_etag_retry = kwargs.pop('duplicate_etag_retry', None) or self.DUPLICATE_ETAG_RETRY
+        self.max_connection_error_retry = (kwargs.pop('max_connection_error_retry', None)
+                                           or self.MAX_CONNECTION_ERROR_RETRY)
 
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(max_retries=2, pool_maxsize=25)
@@ -99,7 +101,7 @@ class Downloader(object):
             except requests.ConnectionError as e:
                 # transient error maybe?
                 connection_retries_count += 1
-                if connection_retries_count <= self.MAX_CONNECTION_ERROR_RETRY:
+                if connection_retries_count <= self.max_connection_error_retry:
                     logger.warn('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
                 else:
                     logger.error('ConnectionError downloading %s: %s.' % (self.mpd, e))
