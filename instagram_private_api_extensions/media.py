@@ -155,12 +155,14 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         if there are no modifications required. Default: False.
     :param kwargs:
          - **min_size**: tuple of (min_width,  min_height)
+         - **progress_bar**: bool flag to show/hide progress bar
     :return:
     """
     from moviepy.video.io.VideoFileClip import VideoFileClip
     from moviepy.video.fx.all import resize, crop
 
     min_size = kwargs.pop('min_size', (612, 320))
+    progress_bar = True if kwargs.pop('progress_bar', None) else False
     vid_is_modified = False     # flag to track if re-encoding can be skipped
 
     temp_remote_filename = ''
@@ -219,7 +221,8 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     if vid_is_modified or not skip_reencoding:
         # write out
         vidclip.write_videofile(
-            output_file, codec='libx264', audio=True, audio_codec='aac', verbose=False)
+            output_file, codec='libx264', audio=True, audio_codec='aac',
+            verbose=False, progress_bar=progress_bar)
 
     # Temp thumbnail img filename
     temp_thumbnail_filename = '%s_%s_%d.tmp.jpg' % (vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
