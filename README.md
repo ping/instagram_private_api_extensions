@@ -41,11 +41,6 @@ To update with latest repo code:
 pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git --upgrade --force-reinstall
 ```
 
-### Important: Patching MoviePy
-[MoviePy](https://github.com/Zulko/moviepy) (as of [``v0.2.2.13``](https://github.com/Zulko/moviepy/tree/v0.2.2.13) or defined in [requirements.txt](requirements.txt)/[setup.py](setup.py)) requires a few unmerged patches to work with this extension
-
-1. [PR #345](https://github.com/Zulko/moviepy/pull/345) because Instagram videos require the AAC audio codec. Patch your copy of MoviePy by [**adding ``aac`` here**](https://github.com/Zulko/moviepy/pull/345/files#diff-9c472ac33610ecc9a98fad3cce9636c2L140) in ``moviepy/tools.py`` if [#345](https://github.com/Zulko/moviepy/pull/345) has not been merged.
-
 ## Usage
 
 ### [Media](instagram_private_api_extensions/media.py)
