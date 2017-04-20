@@ -75,10 +75,10 @@ def calc_crop(aspect_ratios, curr_size):
             # media is too tall
             new_width = curr_width
             new_height = new_width / min_aspect_ratio
-        left = (curr_width - new_width)/2
-        top = (curr_height - new_height)/2
-        right = (curr_width + new_width)/2
-        bottom = (curr_height + new_height)/2
+        left = int((curr_width - new_width)/2)
+        top = int((curr_height - new_height)/2)
+        right = int((curr_width + new_width)/2)
+        bottom = int((curr_height + new_height)/2)
         return left, top, right, bottom
 
 

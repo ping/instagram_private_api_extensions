@@ -86,6 +86,13 @@ class TestMedia(unittest.TestCase):
         end_ts = time.time()
         self.assertLessEqual(end_ts - start_ts, 0.2, 'Skip reencoding is slow')
 
+    def test_remote_video(self):
+        video_url = 'https://raw.githubusercontent.com/johndyer/mediaelement-files/master/big_buck_bunny.mp4'
+        _, size, duration, _ = media.prepare_video(
+            video_url, aspect_ratios=1.0, max_duration=10)
+        self.assertEqual(duration, 10.0, 'Invalid duration.')
+        self.assertEqual(size[0], size[1], 'Invalid width/length.')
+
     def test_helper_methods(self):
         self.assertRaises(ValueError, lambda: media.prepare_video(
             self.TEST_VIDEO_PATH, thumbnail_frame_ts=999.99))
@@ -93,7 +100,7 @@ class TestMedia(unittest.TestCase):
             self.TEST_VIDEO_PATH, save_path='output.mov'))
         self.assertRaises(ValueError, lambda: media.calc_crop((1, 2, 3), (500, 600)))
         box = media.calc_crop((1, 2), (400, 800))
-        self.assertEqual(box, (0, 200.0, 400, 600.0))
+        self.assertEqual(box, (0, 200, 400, 600))
 
 
 if __name__ == '__main__':
