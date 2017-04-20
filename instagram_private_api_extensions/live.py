@@ -92,7 +92,7 @@ class Downloader(object):
 
             except requests.HTTPError as e:
                 err_msg = 'HTTPError downloading %s: %s.' % (self.mpd, e)
-                if e.response and e.response.status_code > 500:
+                if e.response is not None and e.response.status_code >= 500:
                     logger.warn(err_msg)
                     time.sleep(5)
                 else:
@@ -169,7 +169,7 @@ class Downloader(object):
 
             # Periodically check callback if duplicate etag is detected
             if self.duplicate_etag_count and (self.duplicate_etag_count % 5 == 0):
-                logger.warn('Duplicate etag %s detected %d time(s)' % (etag, self.duplicate_etag_count))
+                logger.warning('Duplicate etag %s detected %d time(s)' % (etag, self.duplicate_etag_count))
                 if self.callback:
                     callback = self.callback
                     try:
@@ -178,7 +178,7 @@ class Downloader(object):
                             logger.debug('Callback returned True')
                             self.is_aborted = True
                     except Exception as e:
-                        logger.warn('Error from callback: %s' % str(e))
+                        logger.warning('Error from callback: %s' % str(e))
             # Final hard abort
             elif self.duplicate_etag_count >= self.duplicate_etag_retry:
                 logger.info('Stream likely ended (duplicate etag/hash detected).')
@@ -288,7 +288,7 @@ class Downloader(object):
             except requests.HTTPError as e:
                 err_msg = 'HTTPError %d %s: %s.' % (e.response.status_code, target, e)
                 if i < retry_attempts:
-                    logger.warn('%s Retrying...' % err_msg)
+                    logger.warning('%s Retrying...' % err_msg)
                 else:
                     logger.error(err_msg)
 

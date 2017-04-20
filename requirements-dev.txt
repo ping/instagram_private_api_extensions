@@ -1,1 +1,2 @@
-flake8>=3.30
+flake8
+responses
