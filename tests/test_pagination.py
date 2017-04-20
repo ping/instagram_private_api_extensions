@@ -31,5 +31,14 @@ class TestPagination(unittest.TestCase):
                 wait=0):
             if results.get('items'):
                 resultset.extend(results['items'])
+        self.assertEqual(testset, resultset)
 
+        resultset = []
+        for results in pagination.page(
+                paging_stub, args={},
+                cursor_key='start',
+                get_cursor=lambda r: r.get('next_index'),
+                wait=1):
+            if results.get('items'):
+                resultset.extend(results['items'])
         self.assertEqual(testset, resultset)
