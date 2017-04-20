@@ -23,10 +23,14 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install flake8
+  - pip install coveralls
 
 script:
   - flake8 --max-line-length=120 instagram_private_api_extensions --exclude=./instagram_private_api_extensions/compat.py
-  - python -m unittest discover -s tests -v
+  - coverage run --source=instagram_private_api_extensions -m unittest discover -s tests -v
+
+after_success:
+  coveralls
 
 branches:
   only:
