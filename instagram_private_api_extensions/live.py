@@ -372,7 +372,7 @@ class Downloader(object):
                 os.remove(video_stream)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':      # pragma: no cover
     """
     Example of how to init and start the Downloader
     """

@@ -1,10 +1,12 @@
+.coveragerc
 example*.mp4
 example*.jpg
 media/
 mpdstub.tar.gz
 mpdstub/
-output.mp4
-output/
+output*.mp4
+output*/
+remote.jpg
 
 venv/
 docs/_build

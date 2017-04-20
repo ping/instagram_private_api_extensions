@@ -268,7 +268,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     return video_content, video_size, video_duration, video_thumbnail_content
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':      # pragma: no cover
     import argparse
 
     parser = argparse.ArgumentParser(description='Demo media.py')

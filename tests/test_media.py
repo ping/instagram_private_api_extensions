@@ -53,7 +53,7 @@ class TestMedia(unittest.TestCase):
     def test_remote_image(self):
         image_url = 'https://c2.staticflickr.com/6/5267/5669212075_039ed45bff_z.jpg'
         image_data, size = media.prepare_image(
-            image_url, max_size=(400, 400))
+            image_url, max_size=(400, 400), save_path='remote.jpg')
         self.assertLessEqual(size[0], 400, 'Invalid width.')
         self.assertLessEqual(size[1], 400, 'Invalid height.')
         self.assertGreater(len(image_data), 0)
@@ -85,6 +85,15 @@ class TestMedia(unittest.TestCase):
         self.assertEqual(size[1], self.TEST_VIDEO_SIZE[1], 'Height changed.')
         end_ts = time.time()
         self.assertLessEqual(end_ts - start_ts, 0.2, 'Skip reencoding is slow')
+
+    def test_helper_methods(self):
+        self.assertRaises(ValueError, lambda: media.prepare_video(
+            self.TEST_VIDEO_PATH, thumbnail_frame_ts=999.99))
+        self.assertRaises(ValueError, lambda: media.prepare_video(
+            self.TEST_VIDEO_PATH, save_path='output.mov'))
+        self.assertRaises(ValueError, lambda: media.calc_crop((1, 2, 3), (500, 600)))
+        box = media.calc_crop((1, 2), (400, 800))
+        self.assertEqual(box, (0, 200.0, 400, 600.0))
 
 
 if __name__ == '__main__':

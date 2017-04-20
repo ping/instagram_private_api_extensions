@@ -23,6 +23,17 @@ class TestLive(unittest.TestCase):
         dl.stitch(output_file, cleartempfiles=False)
         self.assertTrue(os.path.isfile(output_file), '%s not generated' % output_file)
 
+    def test_downloader_single_threaded(self):
+        dl = live.Downloader(
+            mpd=self.TEST_MPD_URL,
+            output_dir='output_singlethreaded',
+            duplicate_etag_retry=2,
+            singlethreaded=True)
+        dl.run()
+        output_file = 'output_singlethreaded.mp4'
+        dl.stitch(output_file, cleartempfiles=True)
+        self.assertTrue(os.path.isfile(output_file), '%s not generated' % output_file)
+
 
 if __name__ == '__main__':
     unittest.main()
