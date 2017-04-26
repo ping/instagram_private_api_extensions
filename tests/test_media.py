@@ -59,11 +59,18 @@ class TestMedia(unittest.TestCase):
         self.assertGreater(len(image_data), 0)
 
     def test_prepare_video(self):
-        _, size, duration, _ = media.prepare_video(
-            self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10, save_path='media/output.mp4')
+        vid_returned, size, duration, _ = media.prepare_video(
+            self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10, save_path='media/output.mp4',
+            save_only=True)
         self.assertEqual(duration, 10.0, 'Invalid duration.')
         self.assertEqual(size[0], size[1], 'Invalid width/length.')
         self.assertTrue(os.path.isfile('media/output.mp4'), 'Output file not generated.')
+        self.assertTrue(os.path.isfile(vid_returned), 'Output file not returned.')
+
+        with self.assertRaises(ValueError) as ve:
+            media.prepare_video(
+                self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10, save_only=True)
+        self.assertEqual(str(ve.exception), '"save_path" cannot be empty.')
 
     def test_prepare_video2(self):
         _, size, duration, _ = media.prepare_video(

@@ -156,6 +156,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     :param kwargs:
          - **min_size**: tuple of (min_width,  min_height)
          - **progress_bar**: bool flag to show/hide progress bar
+         - **save_only**: bool flag to return only the path to the saved video file. Requires save_path be set.
     :return:
     """
     from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -163,6 +164,9 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
 
     min_size = kwargs.pop('min_size', (612, 320))
     progress_bar = True if kwargs.pop('progress_bar', None) else False
+    save_only = kwargs.pop('save_only', False)
+    if save_only and not save_path:
+        raise ValueError('"save_path" cannot be empty.')
     vid_is_modified = False     # flag to track if re-encoding can be skipped
 
     temp_remote_filename = ''
@@ -245,14 +249,20 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         vid_filepath = temp_video_filename if not save_path else save_path
     else:
         vid_filepath = vid
-    try:
-        # py3
-        with open(vid_filepath, mode='r', errors='ignore') as vid_data:
-            video_content = vid_data.read()
-    except TypeError:
-        # py2
-        with open(vid_filepath, mode='r') as vid_data:
-            video_content = vid_data.read()
+
+    if not save_only:
+        try:
+            # py3
+            with open(vid_filepath, mode='r', errors='ignore') as vid_data:
+                video_content = vid_data.read()
+        except TypeError:
+            # py2
+            with open(vid_filepath, mode='r') as vid_data:
+                video_content = vid_data.read()
+    else:
+        video_content = vid_filepath    # return the file path instead
+
+    video_content_len = os.path.getsize(vid_filepath)
 
     # Delete temp files
     if os.path.exists(temp_thumbnail_filename):
@@ -262,8 +272,8 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     if temp_remote_filename and os.path.exists(temp_remote_filename):
         os.remove(temp_remote_filename)
 
-    if len(video_content) > 50 * 1024 * 1000:
-        raise ValueError('Video file is too big')
+    if video_content_len > 50 * 1024 * 1000:
+        raise ValueError('Video file is too big.')
 
     return video_content, video_size, video_duration, video_thumbnail_content
 
