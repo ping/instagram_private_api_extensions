@@ -4,7 +4,7 @@ An extension module to [instagram\_private\_api](https://github.com/ping/instagr
 
 ![](https://img.shields.io/badge/Python-2.7-3776ab.svg)
 ![](https://img.shields.io/badge/Python-3.5-3776ab.svg)
-[![Release](https://img.shields.io/badge/release-v0.2.6-orange.svg)](https://github.com/ping/instagram_private_api_extensions/releases)
+[![Release](https://img.shields.io/badge/release-v0.2.7-orange.svg)](https://github.com/ping/instagram_private_api_extensions/releases)
 [![Build](https://img.shields.io/travis/ping/instagram_private_api_extensions.svg)](https://travis-ci.org/ping/instagram_private_api_extensions)
 [![Coverage](https://img.shields.io/coveralls/ping/instagram_private_api_extensions.svg)](https://coveralls.io/github/ping/instagram_private_api_extensions)
 
@@ -26,13 +26,13 @@ An extension module to [instagram\_private\_api](https://github.com/ping/instagr
 Install with pip using
 
 ```bash
-pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git@0.2.6
+pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git@0.2.7
 ```
 
 To update:
 
 ```bash
-pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git@0.2.6 --upgrade
+pip install git+ssh://git@github.com/ping/instagram_private_api_extensions.git@0.2.7 --upgrade
 ```
 
 To update with latest repo code:
