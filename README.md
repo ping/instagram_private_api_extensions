@@ -69,6 +69,15 @@ api.post_photo_story(photo_data, photo_size)
 vid_data, vid_size, vid_duration, vid_thumbnail = media.prepare_video(
     'pathto/my_video.mp4', aspect_ratios=api.reel_ratios())
 api.post_video_story(vid_data, vid_size, vid_duration, vid_thumbnail)
+
+# post a video without reading the whole file into memory
+vid_saved_path, vid_size, vid_duration, vid_thumbnail = media.prepare_video(
+    'pathto/my_video.mp4', aspect_ratios=api.standard_ratios(),
+    save_path='pathto/my_saved_video.mp4', save_only=True)
+# To use save_only, the file must be saved locally
+# by specifying the save_path
+with open(vid_saved_path, 'rb') as video_fp:
+    api.post_video(video_fp, vid_size, vid_duration, vid_thumbnail)
 ```
 
 ### [Pagination](instagram_private_api_extensions/pagination.py)

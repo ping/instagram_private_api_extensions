@@ -93,7 +93,7 @@ class Downloader(object):
             except requests.HTTPError as e:
                 err_msg = 'HTTPError downloading %s: %s.' % (self.mpd, e)
                 if e.response is not None and e.response.status_code >= 500:
-                    logger.warn(err_msg)
+                    logger.warning(err_msg)
                     time.sleep(5)
                 else:
                     logger.error(err_msg)
@@ -102,7 +102,7 @@ class Downloader(object):
                 # transient error maybe?
                 connection_retries_count += 1
                 if connection_retries_count <= self.max_connection_error_retry:
-                    logger.warn('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
+                    logger.warning('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
                 else:
                     logger.error('ConnectionError downloading %s: %s.' % (self.mpd, e))
                     self.is_aborted = True
@@ -270,7 +270,7 @@ class Downloader(object):
 
     def _download(self, target, output):
 
-        retry_attempts = 2      # custom retry for HTTPError
+        retry_attempts = self.max_connection_error_retry + 1
         for i in range(1, retry_attempts + 1):
             try:
                 res = self.session.get(target, headers={
@@ -281,14 +281,14 @@ class Downloader(object):
 
                 with open(output, 'wb') as f:
                     f.write(res.content)
-                break
-            except requests.ConnectionError as e:
-                logger.error('ConnectionError %s: %s' % (target, e))
-                break
-            except requests.HTTPError as e:
-                err_msg = 'HTTPError %d %s: %s.' % (e.response.status_code, target, e)
+                return
+            except (requests.HTTPError, requests.ConnectionError) as e:
+                if isinstance(e, requests.HTTPError):
+                    err_msg = 'HTTPError %d %s: %s.' % (e.response.status_code, target, e)
+                else:
+                    err_msg = 'ConnectionError %s: %s' % (target, e)
                 if i < retry_attempts:
-                    logger.warning('%s Retrying...' % err_msg)
+                    logger.warning('%s. Retrying... ' % err_msg)
                 else:
                     logger.error(err_msg)
 
