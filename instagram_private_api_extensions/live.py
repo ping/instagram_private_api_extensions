@@ -349,7 +349,7 @@ class Downloader(object):
         exit_code = 0
         if not skipffmpeg:
             cmd = [
-                self.ffmpeg_binary, '-loglevel', 'panic',
+                self.ffmpeg_binary, '-loglevel', 'error',
                 '-i', audio_stream,
                 '-i', video_stream,
                 '-c:v', 'copy', '-c:a', 'copy', output_filename]
