@@ -83,7 +83,7 @@ def calc_crop(aspect_ratios, curr_size):
 
 
 def is_remote(media):
-    """Detect is media specified is a url"""
+    """Detect if media specified is a url"""
     if re.match(r'^https?://', media):
         return True
     return False

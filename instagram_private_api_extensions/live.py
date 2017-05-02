@@ -39,10 +39,10 @@ class Downloader(object):
         :param mpd: URL to mpd
         :param output_dir: folder to store the downloaded files
         :param callback_check: callback function that can be used to check
-        on stream status if the downloader cannot be sure that the stream
-        is over
+            on stream status if the downloader cannot be sure that the stream
+            is over
         :param singlethreaded: flag to force single threaded downloads.
-        Not advisable since this increases the probability of lost segments.
+            Not advisable since this increases the probability of lost segments.
         :return:
         """
         self.mpd = mpd
