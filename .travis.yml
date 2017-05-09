@@ -1,4 +1,4 @@
-dist: Trusty
+dist: trusty
 language: python
 
 python:
