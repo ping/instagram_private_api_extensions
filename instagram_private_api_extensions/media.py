@@ -293,7 +293,10 @@ if __name__ == '__main__':      # pragma: no cover
         print('Image dimensions: {0:d}x{1:d}'.format(size[0], size[1]))
 
     def print_vid_info(video_data, size, duration, thumbnail_data):
-        print('vid file size: {0:d}, thumbnail file size: {1:d}, , vid dimensions: {2:d}x{3:d}, duration: {4:f}'.format(len(video_data), len(thumbnail_data), size[0], size[1], duration))
+        print(
+            'vid file size: {0:d}, thumbnail file size: {1:d}, , '
+            'vid dimensions: {2:d}x{3:d}, duration: {4:f}'.format(
+                len(video_data), len(thumbnail_data), size[0], size[1], duration))
 
     if args.video:
         print('Example 1: Resize video to aspect ratio 1, duration 10s')
