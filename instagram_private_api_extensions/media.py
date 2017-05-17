@@ -174,7 +174,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         # Download and rename remote file
         m = hashlib.md5()
         m.update(vid.encode('utf-8'))
-        temp_remote_filename = '%s_%s_%d.tmp.mp4' % (
+        temp_remote_filename = '{0!s}_{1!s}_{2:d}.tmp.mp4'.format(
             os.path.basename(vid).replace('.', ''), m.hexdigest()[:15], int(time.time()))
 
         res = requests.get(vid)
@@ -211,10 +211,10 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     vid_filename = os.path.basename(vid)
     ts = int(time.time())
     m = hashlib.md5()
-    m.update(('%s.%d' % (vid_filename, int(os.path.getmtime(vid)))).encode('utf-8'))
+    m.update(('{0!s}.{1:d}'.format(vid_filename, int(os.path.getmtime(vid)))).encode('utf-8'))
 
     # Temp vid filename for cases when output is not saved
-    temp_video_filename = '%s_%s_%d.tmp.mp4' % (vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
+    temp_video_filename = '{0!s}_{1!s}_{2:d}.tmp.mp4'.format(vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
     if save_path:
         if not save_path.lower().endswith('.mp4'):
             raise ValueError('You must specify a .mp4 save path')
@@ -229,7 +229,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
             verbose=False, progress_bar=progress_bar)
 
     # Temp thumbnail img filename
-    temp_thumbnail_filename = '%s_%s_%d.tmp.jpg' % (vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
+    temp_thumbnail_filename = '{0!s}_{1!s}_{2:d}.tmp.jpg'.format(vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
     vidclip.save_frame(temp_thumbnail_filename, t=thumbnail_frame_ts)
 
     video_duration = vidclip.duration
@@ -290,11 +290,13 @@ if __name__ == '__main__':      # pragma: no cover
 
     if args.image:
         photo_data, size = prepare_image(args.image, max_size=(1000, 800), aspect_ratios=0.9)
-        print('Image dimensions: %dx%d' % (size[0], size[1]))
+        print('Image dimensions: {0:d}x{1:d}'.format(size[0], size[1]))
 
     def print_vid_info(video_data, size, duration, thumbnail_data):
-        print('vid file size: %d, thumbnail file size: %d, , vid dimensions: %dx%d, duration: %f' %
-              (len(video_data), len(thumbnail_data), size[0], size[1], duration))
+        print(
+            'vid file size: {0:d}, thumbnail file size: {1:d}, , '
+            'vid dimensions: {2:d}x{3:d}, duration: {4:f}'.format(
+                len(video_data), len(thumbnail_data), size[0], size[1], duration))
 
     if args.video:
         print('Example 1: Resize video to aspect ratio 1, duration 10s')
