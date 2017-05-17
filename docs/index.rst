@@ -11,8 +11,7 @@ An extension module to `instagram_private_api <https://github.com/ping/instagram
 Features
 --------
 
-1. :ref:`api_media`
-Edits a photo/video so that it complies with Instagram's requirements by:
+1. :ref:`api_media`: Edits a photo/video so that it complies with Instagram's requirements by:
 
     * Resizing
     * Cropping to fit the minimum/maximum aspect ratio
@@ -20,11 +19,9 @@ Edits a photo/video so that it complies with Instagram's requirements by:
     * Clipping the video duration if it is too long
     * Changing the format/encoding
 
-2. :ref:`api_pagination`
-Page through an api call such as ``api.user_feed()``.
+2. :ref:`api_pagination`: Page through an api call such as ``api.user_feed()``.
 
-3. :ref:`api_live`
-Download an ongoing IG live stream. Requires `ffmpeg <http://ffmpeg.org/>`_ installed.
+3. :ref:`api_live`: Download an ongoing IG live stream. Requires `ffmpeg <http://ffmpeg.org/>`_ installed.
 
 .. toctree::
    :maxdepth: 2
