@@ -87,11 +87,11 @@ class Downloader(object):
 
                 self._process_mpd(mpd)
                 if wait:
-                    logger.debug('Sleeping for %ds' % wait)
+                    logger.debug('Sleeping for {0:d}s'.format(wait))
                     time.sleep(wait)
 
             except requests.HTTPError as e:
-                err_msg = 'HTTPError downloading %s: %s.' % (self.mpd, e)
+                err_msg = 'HTTPError downloading {0!s}: {1!s}.'.format(self.mpd, e)
                 if e.response is not None and e.response.status_code >= 500:
                     logger.warning(err_msg)
                     time.sleep(5)
@@ -102,9 +102,9 @@ class Downloader(object):
                 # transient error maybe?
                 connection_retries_count += 1
                 if connection_retries_count <= self.max_connection_error_retry:
-                    logger.warning('ConnectionError downloading %s: %s. Retrying...' % (self.mpd, e))
+                    logger.warning('ConnectionError downloading {0!s}: {1!s}. Retrying...'.format(self.mpd, e))
                 else:
-                    logger.error('ConnectionError downloading %s: %s.' % (self.mpd, e))
+                    logger.error('ConnectionError downloading {0!s}: {1!s}.'.format(self.mpd, e))
                     self.is_aborted = True
 
         self.stop()
@@ -121,12 +121,12 @@ class Downloader(object):
         if not self.singlethreaded:
             logger.debug('Stopping download threads...')
             threads = self.downloaders.values()
-            logger.debug('%d of %d threads are alive' % (
+            logger.debug('{0:d} of {1:d} threads are alive'.format(
                 len(list(filter(lambda t: t and t.is_alive(), threads))), len(threads)))
             [t.join() for t in threads if t and t.is_alive()]
 
     def _download_mpd(self):
-        logger.debug('Requesting %s' % self.mpd)
+        logger.debug('Requesting {0!s}'.format(self.mpd))
         res = self.session.get(self.mpd, headers={
             'User-Agent': self.user_agent,
             'Accept': '*/*',
@@ -147,11 +147,11 @@ class Downloader(object):
             max_age = 0
 
         if broadcast_ended:
-            logger.debug('Found X-FB-Video-Broadcast-Ended header: %s' % broadcast_ended)
+            logger.debug('Found X-FB-Video-Broadcast-Ended header: {0!s}'.format(broadcast_ended))
             logger.info('Stream ended.')
             self.is_aborted = True
         elif max_age > 1:
-            logger.info('Stream ended (cache-control: %s).' % cache_control)
+            logger.info('Stream ended (cache-control: {0!s}).'.format(cache_control))
             self.is_aborted = True
         else:
             # Use etag to detect if the same mpd is received repeatedly
@@ -169,7 +169,7 @@ class Downloader(object):
 
             # Periodically check callback if duplicate etag is detected
             if self.duplicate_etag_count and (self.duplicate_etag_count % 5 == 0):
-                logger.warning('Duplicate etag %s detected %d time(s)' % (etag, self.duplicate_etag_count))
+                logger.warning('Duplicate etag {0!s} detected {1:d} time(s)'.format(etag, self.duplicate_etag_count))
                 if self.callback:
                     callback = self.callback
                     try:
@@ -178,7 +178,7 @@ class Downloader(object):
                             logger.debug('Callback returned True')
                             self.is_aborted = True
                     except Exception as e:
-                        logger.warning('Error from callback: %s' % str(e))
+                        logger.warning('Error from callback: {0!s}'.format(str(e)))
             # Final hard abort
             elif self.duplicate_etag_count >= self.duplicate_etag_retry:
                 logger.info('Stream likely ended (duplicate etag/hash detected).')
@@ -196,10 +196,10 @@ class Downloader(object):
 
     def _process_mpd(self, mpd):
         periods = mpd.findall('mpd:Period', MPD_NAMESPACE)
-        logger.debug('Found %d period(s)' % len(periods))
+        logger.debug('Found {0:d} period(s)'.format(len(periods)))
         # Aaccording to specs, multiple periods are allow but IG only sends one usually
         for period in periods:
-            logger.debug('Processing period %s' % period.attrib.get('id'))
+            logger.debug('Processing period {0!s}'.format(period.attrib.get('id')))
             for adaptation_set in period.findall('mpd:AdaptationSet', MPD_NAMESPACE):
                 representations = adaptation_set.findall('mpd:Representation', MPD_NAMESPACE)
                 # sort representations by quality and pick best one
@@ -214,7 +214,7 @@ class Downloader(object):
                 representation = representations[0]
                 representation_id = representation.attrib.get('id', '')
                 logger.debug(
-                    'Selected representation with id %s out of %s' % (
+                    'Selected representation with id {0!s} out of {1!s}'.format(
                         representation_id,
                         ' / '.join([r.attrib.get('id', '') for r in representations])
                     ))
@@ -253,13 +253,13 @@ class Downloader(object):
                         os.path.join(self.output_dir, os.path.basename(seg_filename)))
                 if not self.initial_buffered_duration:
                     self.initial_buffered_duration = float(buffered_duration) / timescale
-                    logger.debug('Initial buffered duration: %s' % self.initial_buffered_duration)
+                    logger.debug('Initial buffered duration: {0!s}'.format(self.initial_buffered_duration))
 
     def _extract(self, identifier, target, output):
         if identifier in self.downloaders:
-            logger.debug('Already downloading %s' % identifier)
+            logger.debug('Already downloading {0!s}'.format(identifier))
             return
-        logger.debug('Requesting %s' % target)
+        logger.debug('Requesting {0!s}'.format(target))
         if self.singlethreaded:
             self._download(target, output)
         else:
@@ -284,11 +284,11 @@ class Downloader(object):
                 return
             except (requests.HTTPError, requests.ConnectionError) as e:
                 if isinstance(e, requests.HTTPError):
-                    err_msg = 'HTTPError %d %s: %s.' % (e.response.status_code, target, e)
+                    err_msg = 'HTTPError {0:d} {1!s}: {2!s}.'.format(e.response.status_code, target, e)
                 else:
-                    err_msg = 'ConnectionError %s: %s' % (target, e)
+                    err_msg = 'ConnectionError {0!s}: {1!s}'.format(target, e)
                 if i < retry_attempts:
-                    logger.warning('%s. Retrying... ' % err_msg)
+                    logger.warning('{0!s}. Retrying... '.format(err_msg))
                 else:
                     logger.error(err_msg)
 
@@ -311,38 +311,38 @@ class Downloader(object):
         """
         if not self.stream_id:
             raise Exception('No stream ID found.')
-        audio_stream = os.path.join(self.output_dir, 'source_%s_m4a.tmp' % self.stream_id)
-        video_stream = os.path.join(self.output_dir, 'source_%s_mp4.tmp' % self.stream_id)
+        audio_stream = os.path.join(self.output_dir, 'source_{0!s}_m4a.tmp'.format(self.stream_id))
+        video_stream = os.path.join(self.output_dir, 'source_{0!s}_mp4.tmp'.format(self.stream_id))
 
         with open(audio_stream, 'wb') as outfile:
-            logger.debug('Assembling audio stream... %s' % audio_stream)
+            logger.debug('Assembling audio stream... {0!s}'.format(audio_stream))
             # Audio segments are named: '<stream-id>-<numeric-seq-num>.m4a'
             files = list(filter(
                 os.path.isfile,
-                glob.glob(os.path.join(self.output_dir, '%s-*.m4a' % self.stream_id))))
+                glob.glob(os.path.join(self.output_dir, '{0!s}-*.m4a'.format(self.stream_id)))))
             files = sorted(files, key=lambda x: self._get_file_index(x))
             for f in files:
                 with open(f, 'rb') as readfile:
                     try:
                         shutil.copyfileobj(readfile, outfile)
                     except IOError as e:
-                        logger.error('Error processing %s' % f)
+                        logger.error('Error processing {0!s}'.format(f))
                         logger.error(e)
                         raise e
 
         with open(video_stream, 'wb') as outfile:
-            logger.debug('Assembling video stream... %s' % video_stream)
+            logger.debug('Assembling video stream... {0!s}'.format(video_stream))
             # Videos segments are named: '<stream-id>-<numeric-seq-num>.m4v'
             files = list(filter(
                 os.path.isfile,
-                glob.glob(os.path.join(self.output_dir, '%s-*.m4v' % self.stream_id))))
+                glob.glob(os.path.join(self.output_dir, '{0!s}-*.m4v'.format(self.stream_id)))))
             files = sorted(files, key=lambda x: self._get_file_index(x))
             for f in files:
                 with open(f, 'rb') as readfile:
                     try:
                         shutil.copyfileobj(readfile, outfile)
                     except IOError as e:
-                        logger.error('Error processing %s' % f)
+                        logger.error('Error processing {0!s}'.format(f))
                         logger.error(e)
                         raise e
 
@@ -356,12 +356,12 @@ class Downloader(object):
             exit_code = subprocess.call(cmd)
 
             if exit_code:
-                logger.error('ffmpeg exited with the code: %s' % exit_code)
-                logger.error('Command: %s' % ' '.join(cmd))
+                logger.error('ffmpeg exited with the code: {0!s}'.format(exit_code))
+                logger.error('Command: {0!s}'.format(' '.join(cmd)))
 
         if cleartempfiles and not exit_code:
             # Specifically only remove this stream's temp files
-            for f in glob.glob(os.path.join(self.output_dir, '%s-*.*' % self.stream_id)):
+            for f in glob.glob(os.path.join(self.output_dir, '{0!s}-*.*'.format(self.stream_id))):
                 os.remove(f)
 
             # Don't del source*.tmp files if not using ffmpeg

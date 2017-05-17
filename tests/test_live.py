@@ -41,7 +41,7 @@ class TestLive(unittest.TestCase):
         dl.run()
         output_file = 'output.mp4'
         dl.stitch(output_file, cleartempfiles=False)
-        self.assertTrue(os.path.isfile(output_file), '%s not generated' % output_file)
+        self.assertTrue(os.path.isfile(output_file), '{0!s} not generated'.format(output_file))
 
     def test_downloader_single_threaded(self):
         dl = live.Downloader(
@@ -52,7 +52,7 @@ class TestLive(unittest.TestCase):
         dl.run()
         output_file = 'output_singlethreaded.mp4'
         dl.stitch(output_file, cleartempfiles=True)
-        self.assertTrue(os.path.isfile(output_file), '%s not generated' % output_file)
+        self.assertTrue(os.path.isfile(output_file), '{0!s} not generated'.format(output_file))
 
     @responses.activate
     def test_downloader_http_errors(self):
@@ -69,7 +69,7 @@ class TestLive(unittest.TestCase):
             dl.stream_id = '17875351285037717'
             output_file = 'output_httperrors.mp4'
             dl.stitch(output_file, cleartempfiles=True)
-            self.assertFalse(os.path.isfile(output_file), '%s is generated' % output_file)
+            self.assertFalse(os.path.isfile(output_file), '{0!s} is generated'.format(output_file))
 
     @responses.activate
     def test_downloader_conn_error(self):
@@ -89,7 +89,7 @@ class TestLive(unittest.TestCase):
             dl.stream_id = '17875351285037717'
             output_file = 'output_connerror.mp4'
             dl.stitch(output_file, cleartempfiles=True)
-            self.assertFalse(os.path.isfile(output_file), '%s not generated' % output_file)
+            self.assertFalse(os.path.isfile(output_file), '{0!s} not generated'.format(output_file))
 
     @responses.activate
     def test_downloader_fragment_dl_error(self):
@@ -138,7 +138,7 @@ class TestLive(unittest.TestCase):
             dl.stream_id = '17875351285037717'
             output_file = 'output_fragment_connerror.mp4'
             dl.stitch(output_file, cleartempfiles=True)
-            self.assertFalse(os.path.isfile(output_file), '%s not generated' % output_file)
+            self.assertFalse(os.path.isfile(output_file), '{0!s} not generated'.format(output_file))
 
     @responses.activate
     def test_downloader_resp_headers(self):
