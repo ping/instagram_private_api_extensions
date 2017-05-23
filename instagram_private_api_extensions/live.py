@@ -86,7 +86,11 @@ class Downloader(object):
                 mpd, wait = self._download_mpd()
                 connection_retries_count = 0    # reset count
 
-                self._process_mpd(mpd)
+                if not self.duplicate_etag_count:
+                    self._process_mpd(mpd)
+                else:
+                    logger.debug('Skip mpd processing: {0:d} - {1!s}'.format(
+                        self.duplicate_etag_count, self.last_etag))
                 if wait:
                     logger.debug('Sleeping for {0:d}s'.format(wait))
                     time.sleep(wait)
