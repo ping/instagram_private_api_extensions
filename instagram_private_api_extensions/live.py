@@ -238,7 +238,8 @@ class Downloader(object):
                 self._extract(
                     os.path.basename(init_segment),
                     init_segment_url,
-                    os.path.join(self.output_dir, os.path.basename(init_segment)))
+                    os.path.join(self.output_dir, os.path.basename(init_segment)),
+                    force=True)
 
                 # download timeline segments
                 segment_timeline = segment_template.find('mpd:SegmentTimeline', MPD_NAMESPACE)
@@ -258,8 +259,8 @@ class Downloader(object):
                     self.initial_buffered_duration = float(buffered_duration) / timescale
                     logger.debug('Initial buffered duration: {0!s}'.format(self.initial_buffered_duration))
 
-    def _extract(self, identifier, target, output):
-        if identifier in self.downloaders:
+    def _extract(self, identifier, target, output, force=False):
+        if not force and identifier in self.downloaders:
             logger.debug('Already downloading {0!s}'.format(identifier))
             return
         logger.debug('Requesting {0!s}'.format(target))
@@ -269,7 +270,11 @@ class Downloader(object):
             # push each download into it's own thread
             t = threading.Thread(target=self._download, name=identifier, args=(target, output))
             t.start()
-            self.downloaders[identifier] = t
+            if identifier not in self.downloaders:
+                self.downloaders[identifier] = t
+            else:
+                logger.debug('Force download: {}'.format(target))
+                self.downloaders['{}-{}'.format(identifier, int(time.time() * 1000))] = t
 
     def _download(self, target, output):
 
