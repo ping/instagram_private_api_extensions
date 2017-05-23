@@ -273,7 +273,7 @@ class Downloader(object):
             return
         logger.debug('Requesting {0!s}'.format(target))
         if self.singlethreaded:
-            self._download(target, output)
+            self._download(target, output, init_chunk=init_chunk)
         else:
             # push each download into it's own thread
             t = threading.Thread(
