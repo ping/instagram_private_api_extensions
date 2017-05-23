@@ -237,34 +237,38 @@ class Downloader(object):
                     if mobj:
                         self.stream_id = mobj.group('id')
 
-                # download init segment
-                init_segment_url = compat_urlparse.urljoin(self.mpd, init_segment)
-                self._extract(
-                    os.path.basename(init_segment),
-                    init_segment_url,
-                    os.path.join(self.output_dir, os.path.basename(init_segment)),
-                    force=True)
-
                 # download timeline segments
                 segment_timeline = segment_template.find('mpd:SegmentTimeline', MPD_NAMESPACE)
                 segments = segment_timeline.findall('mpd:S', MPD_NAMESPACE)
 
                 buffered_duration = 0
-                for seg in segments:
+                for i, seg in enumerate(segments):
                     buffered_duration += int(seg.attrib.get('d'))
                     seg_filename = media_name.replace(
                         '$Time$', seg.attrib.get('t')).replace('$RepresentationID$', representation_id)
                     segment_url = compat_urlparse.urljoin(self.mpd, seg_filename)
+
+                    # Append init chunk to first segment in the timeline for now
+                    # Not sure if it's needed for every segment yet
+                    init_chunk = None
+                    if i == 0:
+                        # download init segment
+                        init_segment_url = compat_urlparse.urljoin(self.mpd, init_segment)
+                        init_chunk = self._download(
+                            init_segment_url, None, timeout=self.mpd_download_timeout)
+
                     self._extract(
                         os.path.basename(seg_filename),
                         segment_url,
-                        os.path.join(self.output_dir, os.path.basename(seg_filename)))
+                        os.path.join(self.output_dir, os.path.basename(seg_filename)),
+                        init_chunk=init_chunk)
+
                 if not self.initial_buffered_duration:
                     self.initial_buffered_duration = float(buffered_duration) / timescale
                     logger.debug('Initial buffered duration: {0!s}'.format(self.initial_buffered_duration))
 
-    def _extract(self, identifier, target, output, force=False):
-        if not force and identifier in self.downloaders:
+    def _extract(self, identifier, target, output, init_chunk=None):
+        if identifier in self.downloaders:
             logger.debug('Already downloading {0!s}'.format(identifier))
             return
         logger.debug('Requesting {0!s}'.format(target))
@@ -272,26 +276,31 @@ class Downloader(object):
             self._download(target, output)
         else:
             # push each download into it's own thread
-            t = threading.Thread(target=self._download, name=identifier, args=(target, output))
+            t = threading.Thread(
+                target=self._download, name=identifier,
+                kwargs={'target': target, 'output': output, 'init_chunk': init_chunk})
             t.start()
-            if identifier not in self.downloaders:
-                self.downloaders[identifier] = t
-            else:
-                logger.debug('Force download: {}'.format(target))
-                self.downloaders['{}-{}'.format(identifier, int(time.time() * 1000))] = t
+            self.downloaders[identifier] = t
 
-    def _download(self, target, output):
-
+    def _download(self, target, output, timeout=None, init_chunk=None):
         retry_attempts = self.max_connection_error_retry + 1
         for i in range(1, retry_attempts + 1):
             try:
                 res = self.session.get(target, headers={
                     'User-Agent': self.user_agent,
                     'Accept': '*/*',
-                }, timeout=self.download_timeout)
+                }, timeout=timeout or self.download_timeout)
                 res.raise_for_status()
 
+                if not output:
+                    return res.content
+
                 with open(output, 'wb') as f:
+                    if init_chunk:
+                        # prepend init chunk
+                        logger.debug('Appended chunk len {} to {}'.format(
+                            len(init_chunk), output))
+                        f.write(init_chunk)
                     f.write(res.content)
                 return
             except (requests.HTTPError, requests.ConnectionError) as e:
@@ -361,8 +370,11 @@ class Downloader(object):
 
         exit_code = 0
         if not skipffmpeg:
+            ffmpeg_loglevel = 'error'
+            if logger.level == logging.DEBUG:
+                ffmpeg_loglevel = 'info'
             cmd = [
-                self.ffmpeg_binary, '-loglevel', 'error',
+                self.ffmpeg_binary, '-loglevel', ffmpeg_loglevel,
                 '-i', audio_stream,
                 '-i', video_stream,
                 '-c:v', 'copy', '-c:a', 'copy', output_filename]
@@ -394,6 +406,7 @@ if __name__ == '__main__':      # pragma: no cover
                         help='Output filename')
     parser.add_argument('-o', metavar='DOWLOAD_DIR',
                         default='output/', help='Download folder')
+    parser.add_argument('-c', action='store_true', help='Clear temp files')
     args = parser.parse_args()
 
     if args.v:
@@ -412,4 +425,4 @@ if __name__ == '__main__':      # pragma: no cover
             dl.stop()
     finally:
         if args.s:
-            dl.stitch(args.s)
+            dl.stitch(args.s, cleartempfiles=args.c)
