@@ -11,6 +11,7 @@ except ImportError:
 
 
 class TestMedia(unittest.TestCase):
+    """Tests for emdia related functions."""
 
     TEST_IMAGE_PATH = 'media/test.jpg'
     TEST_IMAGE_SIZE = (640, 493)

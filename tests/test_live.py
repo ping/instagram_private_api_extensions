@@ -14,6 +14,7 @@ except ImportError:
 
 
 class TestLive(unittest.TestCase):
+    """Tests for live related functions."""
 
     TEST_MPD_URL = 'http://127.0.01:8000/mpd/17875351285037717.mpd'
 

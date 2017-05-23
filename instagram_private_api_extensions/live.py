@@ -25,6 +25,7 @@ MPD_NAMESPACE = {'mpd': 'urn:mpeg:dash:schema:mpd:2011'}
 
 
 class Downloader(object):
+    """Downloads and assembles a given IG live stream"""
 
     USER_AGENT = 'Instagram 10.14.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
                  'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
@@ -122,10 +123,12 @@ class Downloader(object):
             logger.debug('Stopping download threads...')
             threads = self.downloaders.values()
             logger.debug('{0:d} of {1:d} threads are alive'.format(
-                len(list(filter(lambda t: t and t.is_alive(), threads))), len(threads)))
+                len([t for t in threads if t and t.is_alive()]),
+                len(threads)))
             [t.join() for t in threads if t and t.is_alive()]
 
     def _download_mpd(self):
+        """Downloads the mpd stream info and returns the xml object."""
         logger.debug('Requesting {0!s}'.format(self.mpd))
         res = self.session.get(self.mpd, headers={
             'User-Agent': self.user_agent,
@@ -292,7 +295,8 @@ class Downloader(object):
                 else:
                     logger.error(err_msg)
 
-    def _get_file_index(self, filename):
+    @staticmethod
+    def _get_file_index(filename):
         """ Extract the numbered index in filename for sorting """
         mobj = re.match(r'.+\-(?P<idx>[0-9]+)\.[a-z]+', filename)
         if mobj:
@@ -373,9 +377,7 @@ class Downloader(object):
 
 
 if __name__ == '__main__':      # pragma: no cover
-    """
-    Example of how to init and start the Downloader
-    """
+    # Example of how to init and start the Downloader
     parser = argparse.ArgumentParser()
     parser.add_argument('mpd')
     parser.add_argument('-v', action='store_true', help='Verbose')

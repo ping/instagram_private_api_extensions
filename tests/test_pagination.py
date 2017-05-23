@@ -10,6 +10,7 @@ except ImportError:
 
 
 class TestPagination(unittest.TestCase):
+    """Tests for pagination related functions."""
 
     def test_page(self):
         testset = ['a', 'b', 'c', 'd', 'e', 'f', 'h', 'i', 'j', 'k', 'l', 'm', 'n']
