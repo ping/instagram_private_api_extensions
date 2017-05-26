@@ -10,7 +10,6 @@
 
 ### Before submitting an issue make sure you have:
 - [ ] Read the [README](https://github.com/ping/instagram_private_api_extensions/blob/master/README.md)
-- [ ] [Patched MoviePy](https://github.com/ping/instagram_private_api_extensions/blob/master/README.md#important-patching-moviepy)
 - [ ] [Searched](https://github.com/ping/instagram_private_api_extensions/search?type=Issues) the bugtracker for similar issues including **closed** ones
 
 ### Purpose of your issue?
