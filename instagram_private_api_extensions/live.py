@@ -461,7 +461,7 @@ class Downloader(object):
                         # Don't del source*.tmp files if not using ffmpeg
                         # so that user can still use the source* files with another
                         # tool such as avconv
-                        for f in (audio_stream, video_stream):
+                        for f in (source['audio'], source['video']):
                             try:
                                 os.remove(f)
                             except (IOError, OSError) as ioe:
