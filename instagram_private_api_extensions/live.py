@@ -6,7 +6,6 @@ import re
 import hashlib
 import xml.etree.ElementTree
 import threading
-import glob
 import shutil
 import subprocess
 
@@ -59,6 +58,7 @@ class Downloader(object):
         self.is_aborted = False
         self.singlethreaded = singlethreaded
         self.stream_id = ''
+        self.segment_meta = {}
         self.user_agent = user_agent or self.USER_AGENT
         self.mpd_download_timeout = kwargs.pop('mpd_download_timeout', None) or self.MPD_DOWNLOAD_TIMEOUT
         self.download_timeout = kwargs.pop('download_timeout', None) or self.DOWNLOAD_TIMEOUT
@@ -77,6 +77,10 @@ class Downloader(object):
 
         # custom ffmpeg binary path, fallback to ffmpeg_binary path in env if available
         self.ffmpeg_binary = kwargs.pop('ffmpeg_binary', None) or os.getenv('FFMPEG_BINARY', 'ffmpeg')
+
+    def _store_segment_meta(self, segment, representation):
+        if segment not in self.segment_meta:
+            self.segment_meta[segment] = representation
 
     def run(self):
         """Begin downloading"""
@@ -225,6 +229,19 @@ class Downloader(object):
                         representation_id,
                         ' / '.join([r.attrib.get('id', '') for r in representations])
                     ))
+
+                representation_label = ''
+                # only store segments meta for video
+                if 'video' in representation.attrib.get('mimeType', ''):
+                    if representation.attrib.get('FBQualityLabel'):
+                        representation_label = representation.attrib.get('FBQualityLabel')
+                    elif representation.attrib.get('width') and representation.attrib.get('height'):
+                        representation_label = '{0!s}x{1!s}'.format(
+                            representation.attrib.get('width'),
+                            representation.attrib.get('height'))
+                    elif representation_id:
+                        representation_label = representation_id
+
                 segment_template = representation.find('mpd:SegmentTemplate', MPD_NAMESPACE)
 
                 init_segment = segment_template.attrib.get('initialization')
@@ -247,6 +264,9 @@ class Downloader(object):
                     seg_filename = media_name.replace(
                         '$Time$', seg.attrib.get('t')).replace('$RepresentationID$', representation_id)
                     segment_url = compat_urlparse.urljoin(self.mpd, seg_filename)
+
+                    if representation_label:
+                        self._store_segment_meta(os.path.basename(seg_filename), representation_label)
 
                     # Append init chunk to first segment in the timeline for now
                     # Not sure if it's needed for every segment yet
@@ -298,7 +318,7 @@ class Downloader(object):
                 with open(output, 'wb') as f:
                     if init_chunk:
                         # prepend init chunk
-                        logger.debug('Appended chunk len {} to {}'.format(
+                        logger.debug('Appended chunk len {0:d} to {0!s}'.format(
                             len(init_chunk), output))
                         f.write(init_chunk)
                     f.write(res.content)
@@ -333,71 +353,135 @@ class Downloader(object):
         """
         if not self.stream_id:
             raise Exception('No stream ID found.')
-        audio_stream = os.path.join(self.output_dir, 'source_{0!s}_m4a.tmp'.format(self.stream_id))
-        video_stream = os.path.join(self.output_dir, 'source_{0!s}_mp4.tmp'.format(self.stream_id))
 
-        with open(audio_stream, 'wb') as outfile:
-            logger.debug('Assembling audio stream... {0!s}'.format(audio_stream))
-            # Audio segments are named: '<stream-id>-<numeric-seq-num>.m4a'
-            files = list(filter(
-                os.path.isfile,
-                glob.glob(os.path.join(self.output_dir, '{0!s}-*.m4a'.format(self.stream_id)))))
-            files = sorted(files, key=lambda x: self._get_file_index(x))
-            for f in files:
-                with open(f, 'rb') as readfile:
-                    try:
-                        shutil.copyfileobj(readfile, outfile)
-                    except IOError as e:
-                        logger.error('Error processing {0!s}'.format(f))
-                        logger.error(e)
-                        raise e
+        has_ffmpeg_error = False
+        files_generated = []
 
-        with open(video_stream, 'wb') as outfile:
-            logger.debug('Assembling video stream... {0!s}'.format(video_stream))
-            # Videos segments are named: '<stream-id>-<numeric-seq-num>.m4v'
-            files = list(filter(
-                os.path.isfile,
-                glob.glob(os.path.join(self.output_dir, '{0!s}-*.m4v'.format(self.stream_id)))))
-            files = sorted(files, key=lambda x: self._get_file_index(x))
-            for f in files:
-                with open(f, 'rb') as readfile:
-                    try:
-                        shutil.copyfileobj(readfile, outfile)
-                    except IOError as e:
-                        logger.error('Error processing {0!s}'.format(f))
-                        logger.error(e)
-                        raise e
+        all_segments = sorted(self.segment_meta.keys(), key=lambda x: self._get_file_index(x))
+        prev_res = ''
+        sources = []
+        audio_stream_format = 'source_{0}_{1}_mp4.tmp'
+        video_stream_format = 'source_{0}_{1}_m4a.tmp'
+        video_stream = ''
+        audio_stream = ''
 
-        exit_code = 0
+        # Iterate through all the segments and generate a pair of source files
+        # for each time a resolution change is detected
+        for segment in all_segments:
+
+            video_stream = os.path.join(
+                self.output_dir, video_stream_format.format(self.stream_id, len(sources)))
+            audio_stream = os.path.join(
+                self.output_dir, audio_stream_format.format(self.stream_id, len(sources)))
+
+            if not os.path.isfile(os.path.join(self.output_dir, segment)):
+                logger.warning('Segment not found: {0!s}'.format(segment))
+                continue
+
+            if not os.path.isfile(os.path.join(self.output_dir, segment.replace('.m4v', '.m4a'))):
+                logger.warning('Segment not found: {0!s}'.format(segment.replace('.m4v', '.m4a')))
+                continue
+
+            if prev_res and prev_res != self.segment_meta[segment]:
+                # resolution changed detected
+                # push current generated file pair into sources
+                sources.append({'video': video_stream, 'audio': audio_stream})
+                prev_res = self.segment_meta[segment]
+                video_stream = os.path.join(
+                    self.output_dir, video_stream_format.format(self.stream_id, len(sources)))
+                audio_stream = os.path.join(
+                    self.output_dir, audio_stream_format.format(self.stream_id, len(sources)))
+
+            file_mode = 'ab' if os.path.exists(video_stream) else 'wb'
+            seg_file = os.path.join(self.output_dir, segment)
+
+            with open(video_stream, file_mode) as outfile,\
+                    open(seg_file, 'rb') as readfile:
+                shutil.copyfileobj(readfile, outfile)
+                logger.debug(
+                    'Assembling video stream {0!s} => {1!s}'.format(segment, video_stream))
+
+            with open(audio_stream, file_mode) as outfile,\
+                    open(seg_file.replace('.m4v', '.m4a'), 'rb') as readfile:
+                shutil.copyfileobj(readfile, outfile)
+                logger.debug(
+                    'Assembling audio stream {0!s} => {1!s}'.format(segment, audio_stream))
+
+        if audio_stream and video_stream:
+            # push last pair into source
+            sources.append({'video': video_stream, 'audio': audio_stream})
+
+        if len(sources) > 1:
+            logger.warning(
+                'Stream has sections with different resolutions.\n'
+                '{0:d} mp4 files will be generated in total.'.format(len(sources)))
+
         if not skipffmpeg:
-            ffmpeg_loglevel = 'error'
-            if logger.level == logging.DEBUG:
-                ffmpeg_loglevel = 'info'
-            cmd = [
-                self.ffmpeg_binary, '-loglevel', ffmpeg_loglevel,
-                '-i', audio_stream,
-                '-i', video_stream,
-                '-c:v', 'copy', '-c:a', 'copy', output_filename]
-            exit_code = subprocess.call(cmd)
+            for n, source in enumerate(sources):
 
-            if exit_code:
-                logger.error('ffmpeg exited with the code: {0!s}'.format(exit_code))
-                logger.error('Command: {0!s}'.format(' '.join(cmd)))
+                if len(sources) == 1:
+                    # use supplied output filename as-is if it's the only one
+                    generated_filename = output_filename
+                else:
+                    # Generate a new filename by appending n+1
+                    # to the original specified output filename
+                    # so that it looks like output-1.mp4, output-2.mp4, etc
+                    dir_name = os.path.dirname(output_filename)
+                    file_name = os.path.basename(output_filename)
+                    dot_pos = file_name.rfind('.')
+                    if dot_pos >= 0:
+                        filename_no_ext = file_name[0:dot_pos]
+                        ext = file_name[dot_pos:]
+                    else:
+                        filename_no_ext = file_name
+                        ext = ''
+                    generated_filename = os.path.join(
+                        dir_name, '{0!s}-{1:d}{2!s}'.format(filename_no_ext, n + 1, ext))
 
-        if cleartempfiles and not exit_code:
-            # Specifically only remove this stream's temp files
-            for f in glob.glob(os.path.join(self.output_dir, '{0!s}-*.*'.format(self.stream_id))):
-                os.remove(f)
+                ffmpeg_loglevel = 'error'
+                if logger.level == logging.DEBUG:
+                    ffmpeg_loglevel = 'warning'
+                cmd = [
+                    self.ffmpeg_binary, '-y',
+                    '-loglevel', ffmpeg_loglevel,
+                    '-i', source['audio'],
+                    '-i', source['video'],
+                    '-c:v', 'copy',
+                    '-c:a', 'copy',
+                    generated_filename]
+                exit_code = subprocess.call(cmd)
 
-            # Don't del source*.tmp files if not using ffmpeg
-            # so that user can still use the source* files with another
-            # tool such as avconv
-            if not skipffmpeg:
-                os.remove(audio_stream)
-                os.remove(video_stream)
+                if exit_code:
+                    logger.error('ffmpeg exited with the code: {0!s}'.format(exit_code))
+                    logger.error('Command: {0!s}'.format(' '.join(cmd)))
+                    has_ffmpeg_error = True
+                else:
+                    files_generated.append(generated_filename)
+                    if cleartempfiles and not skipffmpeg:
+                        # Don't del source*.tmp files if not using ffmpeg
+                        # so that user can still use the source* files with another
+                        # tool such as avconv
+                        for f in (audio_stream, video_stream):
+                            try:
+                                os.remove(f)
+                            except (IOError, OSError) as ioe:
+                                logger.warning('Error removing {0!s}: {1!s}'.format(f, str(ioe)))
+
+        if cleartempfiles and not has_ffmpeg_error:
+            # Specifically only remove this stream's segment files
+            for seg in all_segments:
+                for f in (seg, seg.replace('.m4v', '.m4a')):
+                    try:
+                        os.remove(os.path.join(self.output_dir, f))
+                    except (IOError, OSError) as ioe:
+                        logger.warning('Error removing {0!s}: {1!s}'.format(f, str(ioe)))
+
+        return files_generated
 
 
 if __name__ == '__main__':      # pragma: no cover
+    import json
+
     # Example of how to init and start the Downloader
     parser = argparse.ArgumentParser()
     parser.add_argument('mpd')
@@ -425,4 +509,7 @@ if __name__ == '__main__':      # pragma: no cover
             dl.stop()
     finally:
         if args.s:
-            dl.stitch(args.s, cleartempfiles=args.c)
+            with open('segment_meta.json', 'w') as metafile:
+                json.dump(dl.segment_meta, metafile, indent=2)
+            output_files = dl.stitch(args.s, cleartempfiles=args.c)
+            print('Generated: {0!s}'.format(' '.join(output_files)))
