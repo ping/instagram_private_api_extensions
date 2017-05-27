@@ -386,12 +386,12 @@ class Downloader(object):
                 # resolution changed detected
                 # push current generated file pair into sources
                 sources.append({'video': video_stream, 'audio': audio_stream})
-                prev_res = self.segment_meta[segment]
                 video_stream = os.path.join(
                     self.output_dir, video_stream_format.format(self.stream_id, len(sources)))
                 audio_stream = os.path.join(
                     self.output_dir, audio_stream_format.format(self.stream_id, len(sources)))
 
+            prev_res = self.segment_meta[segment]
             file_mode = 'ab' if os.path.exists(video_stream) else 'wb'
             seg_file = os.path.join(self.output_dir, segment)
 
