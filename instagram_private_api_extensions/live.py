@@ -101,9 +101,18 @@ class Downloader(object):
 
             except requests.HTTPError as e:
                 err_msg = 'HTTPError downloading {0!s}: {1!s}.'.format(self.mpd, e)
-                if e.response is not None and e.response.status_code >= 500:
-                    logger.warning(err_msg)
-                    time.sleep(5)
+                if e.response is not None and \
+                        (e.response.status_code >= 500 or e.response.status_code == 404):
+                    # 505 - temporal server problem
+                    # 404 - seems to indicate that stream is starting but not ready
+                    # 403 - stream is too long gone
+                    connection_retries_count += 1
+                    if connection_retries_count <= self.max_connection_error_retry:
+                        logger.warning(err_msg)
+                        time.sleep(5)
+                    else:
+                        logger.error(err_msg)
+                        self.is_aborted = True
                 else:
                     logger.error(err_msg)
                     self.is_aborted = True
