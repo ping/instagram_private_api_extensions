@@ -21,11 +21,11 @@ class TestLive(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         for f in ('output.mp4', 'output_singlethreaded.mp4',
-                  'output_httperrors.mp4', 'output_connerror.mp4',
+                  'output_httperrors.mp4', 'output_404.mp4', 'output_connerror.mp4',
                   'output_respheaders.mp4', 'output_fragment_connerror.mp4'):
             if os.path.isfile(f):
                 os.remove(f)
-        for fd in ('output', 'output_singlethreaded', 'output_httperrors',
+        for fd in ('output', 'output_singlethreaded', 'output_httperrors', 'output_404',
                    'output_connerror', 'output_respheaders', 'output_fragment_connerror'):
             if os.path.exists(fd):
                 shutil.rmtree(fd, ignore_errors=True)
@@ -43,6 +43,21 @@ class TestLive(unittest.TestCase):
         output_file = 'output.mp4'
         dl.stitch(output_file, cleartempfiles=False)
         self.assertTrue(os.path.isfile(output_file), '{0!s} not generated'.format(output_file))
+
+    def test_downloader_404(self):
+        def check_status():
+            return True
+
+        dl = live.Downloader(
+            mpd=self.TEST_MPD_URL + 'x',
+            output_dir='output_404',
+            max_connection_error_retry=2,
+            callback_check=check_status)
+        dl.run()
+        output_file = 'output_404.mp4'
+        with self.assertRaises(Exception):
+            dl.stitch(output_file, cleartempfiles=False)
+        self.assertFalse(os.path.isfile(output_file), '{0!s} is generated'.format(output_file))
 
     def test_downloader_single_threaded(self):
         dl = live.Downloader(

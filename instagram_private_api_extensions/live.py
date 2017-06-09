@@ -13,6 +13,7 @@ import requests
 try:
     from .compat import compat_urlparse
 except ValueError:
+    # pragma: no cover
     # To allow running in terminal
     from compat import compat_urlparse
 
