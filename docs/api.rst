@@ -35,3 +35,14 @@ Live
 .. autoclass:: Downloader
    :special-members: __init__
    :inherited-members:
+
+..  _api_replay:
+
+Replay
+------
+
+.. automodule:: instagram_private_api_extensions.replay
+
+.. autoclass:: Downloader
+   :special-members: __init__
+   :inherited-members:
