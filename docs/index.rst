@@ -23,7 +23,7 @@ Features
 
 3. :ref:`api_live`: Download an ongoing IG live stream. Requires `ffmpeg <http://ffmpeg.org/>`_ installed.
 
-4. :ref:`api_replay`: Download an ongoing IG live replay stream. Requires `ffmpeg <http://ffmpeg.org/>`_ installed.
+4. :ref:`api_replay`: Download an IG live replay stream. Requires `ffmpeg <http://ffmpeg.org/>`_ installed.
 
 .. toctree::
    :maxdepth: 2
