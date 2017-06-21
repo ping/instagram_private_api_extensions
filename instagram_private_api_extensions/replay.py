@@ -64,6 +64,14 @@ class Downloader(object):
     def download(self, output_filename,
                  skipffmpeg=False,
                  cleartempfiles=True):
+        """
+        Download and saves the generated file with the file name specified.
+
+        :param output_filename: Output file path
+        :param skipffmpeg: bool flag to not use ffmpeg to join audio and video file into final mp4
+        :param cleartempfiles: bool flag to remove downloaded and temp files
+        :return:
+        """
 
         periods = self.mpd_document.findall('mpd:Period', MPD_NAMESPACE)
         logger.debug('Found {0:d} period(s)'.format(len(periods)))

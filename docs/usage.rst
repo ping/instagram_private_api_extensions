@@ -117,3 +117,21 @@ Usage
         # Requires ffmpeg installed. If you prefer to use avconv
         # for example, omit this step and do it manually
         dl.stitch('my_video.mp4')
+
+:ref:`live <api_replay>`
+------------------------
+
+.. code-block:: python
+
+    from instagram_private_api_extensions import replay
+
+    user_story_feed = api.user_story_feed('12345')
+
+    broadcasts = user_story_feed.get('post_live_item', {}).get('broadcasts', [])
+    for broadcast in broadcasts:
+        dl = replay.Downloader(
+            mpd=broadcast['dash_manifest'],
+            output_dir='output_{}/'.format(broadcast['id']),
+            user_agent=api.user_agent)
+        # download and save to file
+        dl.download('output_{}.mp4'.format(broadcast['id']))
