@@ -22,6 +22,8 @@ An extension module to [instagram\_private\_api](https://github.com/ping/instagr
 
 3. [``live``](#live): Download an ongoing IG live stream. Requires ffmpeg installed.
 
+4. [``replay``](#replay): Download an IG live replay stream. Requires ffmpeg installed.
+
 ## Documentation
 
 Documentation is available at https://instagram-private-api-extensions.readthedocs.io/en/latest/
@@ -107,7 +109,7 @@ broadcast = api.broadcast_info('1234567890')
 
 dl = live.Downloader(
     mpd=broadcast['dash_playback_url'],
-    output_dir='output_%s/' % str(broadcast['id']),
+    output_dir='output_{}/'.format(broadcast['id']),
     user_agent=api.user_agent)
 try:
     dl.run()
@@ -119,6 +121,23 @@ finally:
     # Requires ffmpeg installed. If you prefer to use avconv
     # for example, omit this step and do it manually
     dl.stitch('my_video.mp4')
+```
+
+### [Replay](instagram_private_api_extensions/replay.py)
+
+```python
+from instagram_private_api_extensions import replay
+
+user_story_feed = api.user_story_feed('12345')
+
+broadcasts = user_story_feed.get('post_live_item', {}).get('broadcasts', [])
+for broadcast in broadcasts:
+    dl = replay.Downloader(
+        mpd=broadcast['dash_manifest'],
+        output_dir='output_{}/'.format(broadcast['id']),
+        user_agent=api.user_agent)
+    # download and save to file
+    dl.download('output_{}.mp4'.format(broadcast['id']))
 ```
 
 ## Support
