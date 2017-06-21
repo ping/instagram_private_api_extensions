@@ -20,8 +20,6 @@ class Downloader(object):
     USER_AGENT = 'Instagram 10.26.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
                  'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
     DOWNLOAD_TIMEOUT = 15
-    MAX_CONNECTION_ERROR_RETRY = 10
-    SLEEP_INTERVAL_BEFORE_RETRY = 5
 
     def __init__(self, mpd, output_dir, user_agent=None, **kwargs):
         """
@@ -37,10 +35,6 @@ class Downloader(object):
 
         self.user_agent = user_agent or self.USER_AGENT
         self.download_timeout = kwargs.pop('download_timeout', None) or self.DOWNLOAD_TIMEOUT
-        self.max_connection_error_retry = (kwargs.pop('max_connection_error_retry', None)
-                                           or self.MAX_CONNECTION_ERROR_RETRY)
-        self.sleep_interval_before_retry = (kwargs.pop('sleep_interval_before_retry', None)
-                                            or self.SLEEP_INTERVAL_BEFORE_RETRY)
 
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(max_retries=2)
