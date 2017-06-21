@@ -13,6 +13,9 @@ before_install:
   # Download mpd for live testing
   - curl -s -L -o mpdstub.tar.gz 'https://drive.google.com/uc?export=download&id=0B7NFCwvW5pc3Y0ZTQkUyV3NaSEU'
   - mkdir mpdstub && tar -xzf mpdstub.tar.gz -C mpdstub/
+  # Download replay files for replay testing
+  - curl -s -L -o replaystub.tar.gz 'https://drive.google.com/uc?export=download&id=0B7NFCwvW5pc3REQtdzRPdUpHVHM'
+  - tar -xzf replaystub.tar.gz -C mpdstub/
   - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '3' ]]; then ((cd mpdstub && python -m http.server 8000) &); fi
   - if [[ ${TRAVIS_PYTHON_VERSION:0:1} == '2' ]]; then ((cd mpdstub && python -m SimpleHTTPServer 8000) &); fi
   # Download media files for media testing
