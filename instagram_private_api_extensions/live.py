@@ -33,6 +33,7 @@ class Downloader(object):
     DOWNLOAD_TIMEOUT = 15
     DUPLICATE_ETAG_RETRY = 30
     MAX_CONNECTION_ERROR_RETRY = 10
+    SLEEP_INTERVAL_BEFORE_RETRY = 5
 
     def __init__(self, mpd, output_dir, callback_check=None, singlethreaded=False, user_agent=None, **kwargs):
         """
@@ -66,6 +67,8 @@ class Downloader(object):
         self.duplicate_etag_retry = kwargs.pop('duplicate_etag_retry', None) or self.DUPLICATE_ETAG_RETRY
         self.max_connection_error_retry = (kwargs.pop('max_connection_error_retry', None)
                                            or self.MAX_CONNECTION_ERROR_RETRY)
+        self.sleep_interval_before_retry = (kwargs.pop('sleep_interval_before_retry', None)
+                                            or self.SLEEP_INTERVAL_BEFORE_RETRY)
 
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(max_retries=2, pool_maxsize=25)
@@ -110,7 +113,7 @@ class Downloader(object):
                     connection_retries_count += 1
                     if connection_retries_count <= self.max_connection_error_retry:
                         logger.warning(err_msg)
-                        time.sleep(5)
+                        time.sleep(self.sleep_interval_before_retry)
                     else:
                         logger.error(err_msg)
                         self.is_aborted = True
@@ -190,7 +193,8 @@ class Downloader(object):
 
             # Periodically check callback if duplicate etag is detected
             if self.duplicate_etag_count and (self.duplicate_etag_count % 5 == 0):
-                logger.warning('Duplicate etag {0!s} detected {1:d} time(s)'.format(etag, self.duplicate_etag_count))
+                logger.warning('Duplicate etag {0!s} detected {1:d} time(s)'.format(
+                    etag, self.duplicate_etag_count))
                 if self.callback:
                     callback = self.callback
                     try:
@@ -362,7 +366,7 @@ class Downloader(object):
         :param cleartempfiles: bool flag to remove downloaded and temp files
         """
         if not self.stream_id:
-            raise Exception('No stream ID found.')
+            raise ValueError('No stream ID found.')
 
         has_ffmpeg_error = False
         files_generated = []
@@ -393,7 +397,7 @@ class Downloader(object):
                 continue
 
             if prev_res and prev_res != self.segment_meta[segment]:
-                # resolution changed detected
+                # resolution change detected
                 # push current generated file pair into sources
                 sources.append({'video': video_stream, 'audio': audio_stream})
                 video_stream = os.path.join(
