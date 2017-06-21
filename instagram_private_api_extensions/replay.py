@@ -207,8 +207,8 @@ if __name__ == '__main__':      # pragma: no cover
         mpd_contents = mpd_file.read()
         dl = Downloader(mpd=mpd_contents, output_dir=args.o)
         try:
-            duration, generated_files = dl.download(args.s, cleartempfiles=args.c)
-            print('Video Duration: %s' % duration)
+            generated_files = dl.download(args.s, cleartempfiles=args.c)
+            print('Video Duration: %s' % dl.duration)
             print('Generated files: \n%s' % '\n'.join(generated_files))
         except KeyboardInterrupt as e:
             logger.info('Interrupted')
