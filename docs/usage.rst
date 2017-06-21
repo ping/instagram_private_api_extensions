@@ -118,8 +118,8 @@ Usage
         # for example, omit this step and do it manually
         dl.stitch('my_video.mp4')
 
-:ref:`live <api_replay>`
-------------------------
+:ref:`replay <api_replay>`
+--------------------------
 
 .. code-block:: python
 

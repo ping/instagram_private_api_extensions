@@ -73,14 +73,14 @@ class TestReplay(unittest.TestCase):
             output_dir='output_replay_skipffmpeg')
 
         output_file = 'output_replay_skipffmpeg.mp4'
-        dl.download(output_file, cleartempfiles=True)
-        self.assertFalse(
+        dl.download(output_file, skipffmpeg=True)
+        self.assertTrue(
             os.path.isfile('output_replay_skipffmpeg/replay_video.mp4'),
-            'Temp video file was not cleared')
-        self.assertFalse(
+            'Temp video file was cleared')
+        self.assertTrue(
             os.path.isfile('output_replay_skipffmpeg/replay_audio.mp4'),
-            'Temp audio file was not cleared')
-        self.assertTrue(os.path.isfile(output_file), '{0!s} not generated'.format(output_file))
+            'Temp audio file was cleared')
+        self.assertFalse(os.path.isfile(output_file), '{0!s} not generated'.format(output_file))
 
     def test_downloader_badffmpeg(self):
         dl = replay.Downloader(
