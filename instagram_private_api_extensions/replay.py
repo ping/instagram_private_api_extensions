@@ -4,6 +4,7 @@ import os
 import re
 import xml.etree.ElementTree
 import subprocess
+from contextlib import closing
 
 import requests
 
@@ -119,14 +120,15 @@ class Downloader(object):
             video_file = os.path.join(self.output_dir, os.path.basename(video_stream))
             for target in ((audio_stream, audio_file), (video_stream, video_file)):
                 logger.debug('Downloading {} as {}'.format(*target))
-                res = self.session.get(target[0], headers={
-                    'User-Agent': self.user_agent,
-                    'Accept': '*/*',
-                }, timeout=self.download_timeout)
-                res.raise_for_status()
+                with closing(self.session.get(
+                        target[0],
+                        headers={'User-Agent': self.user_agent, 'Accept': '*/*'},
+                        timeout=self.download_timeout, stream=True)) as res:
+                    res.raise_for_status()
 
-                with open(target[1], 'wb') as f:
-                    f.write(res.content)
+                    with open(target[1], 'wb') as f:
+                        for chunk in res.iter_content(chunk_size=1024*100):
+                            f.write(chunk)
 
             if skipffmpeg:
                 continue
