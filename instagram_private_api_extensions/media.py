@@ -1,10 +1,10 @@
 import os
-import time
-import hashlib
 import io
 import re
-from PIL import Image
+import tempfile
+import shutil
 
+from PIL import Image
 import requests
 
 
@@ -167,23 +167,24 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     save_only = kwargs.pop('save_only', False)
     if save_only and not save_path:
         raise ValueError('"save_path" cannot be empty.')
+    if save_path:
+        if not save_path.lower().endswith('.mp4'):
+            raise ValueError('You must specify a .mp4 save path')
+
     vid_is_modified = False     # flag to track if re-encoding can be skipped
 
-    temp_remote_filename = ''
-    if is_remote(vid):
-        # Download and rename remote file
-        m = hashlib.md5()
-        m.update(vid.encode('utf-8'))
-        temp_remote_filename = '{0!s}_{1!s}_{2:d}.tmp.mp4'.format(
-            os.path.basename(vid).replace('.', ''), m.hexdigest()[:15], int(time.time()))
+    temp_video_file = tempfile.NamedTemporaryFile(prefix='ipae_', suffix='.mp4', delete=False)
 
+    if is_remote(vid):
+        # Download remote file
         res = requests.get(vid)
-        with open(temp_remote_filename, 'wb') as file_out:
-            file_out.write(res.content)
-        vidclip = VideoFileClip(temp_remote_filename)
-        vid = temp_remote_filename
+        temp_video_file.write(res.content)
+        video_src_filename = temp_video_file.name
     else:
-        vidclip = VideoFileClip(vid)
+        shutil.copyfile(vid, temp_video_file.name)
+        video_src_filename = vid
+
+    vidclip = VideoFileClip(temp_video_file.name)
 
     if vidclip.duration < 3 * 1.0:
         raise ValueError('Duration is too short')
@@ -207,70 +208,35 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
             vidclip = resize(vidclip, newsize=new_size)
             vid_is_modified = True
 
-    # Use original filename, current timestamp, vid file timestamp for temp filename generation
-    vid_filename = os.path.basename(vid)
-    ts = int(time.time())
-    m = hashlib.md5()
-    m.update(('{0!s}.{1:d}'.format(vid_filename, int(os.path.getmtime(vid)))).encode('utf-8'))
-
-    # Temp vid filename for cases when output is not saved
-    temp_video_filename = '{0!s}_{1!s}_{2:d}.tmp.mp4'.format(vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
-    if save_path:
-        if not save_path.lower().endswith('.mp4'):
-            raise ValueError('You must specify a .mp4 save path')
-        output_file = save_path
-    else:
-        output_file = temp_video_filename
-
+    temp_vid_output_file = tempfile.NamedTemporaryFile(prefix='ipae_', suffix='.mp4', delete=False)
     if vid_is_modified or not skip_reencoding:
         # write out
         vidclip.write_videofile(
-            output_file, codec='libx264', audio=True, audio_codec='aac',
+            temp_vid_output_file.name, codec='libx264', audio=True, audio_codec='aac',
             verbose=False, progress_bar=progress_bar)
+    else:
+        # no reencoding
+        shutil.copyfile(video_src_filename, temp_vid_output_file.name)
+
+    if save_path:
+        shutil.copyfile(temp_vid_output_file.name, save_path)
 
     # Temp thumbnail img filename
-    temp_thumbnail_filename = '{0!s}_{1!s}_{2:d}.tmp.jpg'.format(vid_filename.replace('.', ''), m.hexdigest()[:15], ts)
-    vidclip.save_frame(temp_thumbnail_filename, t=thumbnail_frame_ts)
+    temp_thumbnail_file = tempfile.NamedTemporaryFile(prefix='ipae_', suffix='.jpg', delete=False)
+    vidclip.save_frame(temp_thumbnail_file.name, t=thumbnail_frame_ts)
 
     video_duration = vidclip.duration
     video_size = vidclip.size
     del vidclip      # clear it out
 
-    try:
-        # py3
-        with open(temp_thumbnail_filename, mode='r', errors='ignore') as thumb_data:
-            video_thumbnail_content = thumb_data.read()
-    except TypeError:
-        # py2
-        with open(temp_thumbnail_filename, mode='r') as thumb_data:
-            video_thumbnail_content = thumb_data.read()
-
-    if vid_is_modified or not skip_reencoding:
-        vid_filepath = temp_video_filename if not save_path else save_path
-    else:
-        vid_filepath = vid
+    video_thumbnail_content = temp_thumbnail_file.read()
 
     if not save_only:
-        try:
-            # py3
-            with open(vid_filepath, mode='r', errors='ignore') as vid_data:
-                video_content = vid_data.read()
-        except TypeError:
-            # py2
-            with open(vid_filepath, mode='r') as vid_data:
-                video_content = vid_data.read()
+        video_content_len = os.path.getsize(temp_vid_output_file.name)
+        video_content = temp_vid_output_file.read()
     else:
-        video_content = vid_filepath    # return the file path instead
-
-    video_content_len = os.path.getsize(vid_filepath)
-
-    # Delete temp files
-    if os.path.exists(temp_thumbnail_filename):
-        os.remove(temp_thumbnail_filename)
-    if not save_path and os.path.exists(temp_video_filename):
-        os.remove(temp_video_filename)
-    if temp_remote_filename and os.path.exists(temp_remote_filename):
-        os.remove(temp_remote_filename)
+        video_content_len = os.path.getsize(save_path)
+        video_content = save_path    # return the file path instead
 
     if video_content_len > 50 * 1024 * 1000:
         raise ValueError('Video file is too big.')

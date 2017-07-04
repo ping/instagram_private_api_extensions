@@ -1,13 +1,17 @@
 import unittest
 import sys
 import os
-import time
+import tempfile
+import io
 
 try:
     from instagram_private_api_extensions import media
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     from instagram_private_api_extensions import media
+
+from moviepy.video.io.VideoFileClip import VideoFileClip
+from PIL import Image
 
 
 class TestMedia(unittest.TestCase):
@@ -60,7 +64,7 @@ class TestMedia(unittest.TestCase):
         self.assertGreater(len(image_data), 0)
 
     def test_prepare_video(self):
-        vid_returned, size, duration, _ = media.prepare_video(
+        vid_returned, size, duration, thumbnail_content = media.prepare_video(
             self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10, save_path='media/output.mp4',
             save_only=True)
         self.assertEqual(duration, 10.0, 'Invalid duration.')
@@ -72,9 +76,20 @@ class TestMedia(unittest.TestCase):
             media.prepare_video(
                 self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10, save_only=True)
         self.assertEqual(str(ve.exception), '"save_path" cannot be empty.')
+        self.assertGreater(len(thumbnail_content), 0, 'No thumbnail content returned.')
+
+        # Save video, thumbnail content and verify attributes
+        vidclip_output = VideoFileClip('media/output.mp4')
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertEqual(size[0], vidclip_output.size[0])
+        self.assertEqual(size[1], vidclip_output.size[1])
+
+        im = Image.open(io.BytesIO(thumbnail_content))
+        self.assertEqual(size[0], im.size[0])
+        self.assertEqual(size[1], im.size[1])
 
     def test_prepare_video2(self):
-        _, size, duration, _ = media.prepare_video(
+        video_content, size, duration, thumbnail_content = media.prepare_video(
             self.TEST_VIDEO_PATH, max_size=(480, 480), min_size=(0, 0))
         self.assertEqual(duration, self.TEST_VIDEO_DURATION, 'Duration changed.')
         self.assertLessEqual(size[0], 480, 'Invalid width.')
@@ -83,23 +98,71 @@ class TestMedia(unittest.TestCase):
             1.0 * size[0] / size[1],
             1.0 * self.TEST_VIDEO_SIZE[0] / self.TEST_VIDEO_SIZE[1],
             'Aspect ratio changed.')
+        self.assertGreater(len(video_content), 0, 'No video content returned.')
+        self.assertGreater(len(thumbnail_content), 0, 'No thumbnail content returned.')
+
+        # Save video, thumbnail content and verify attributes
+        video_output = tempfile.NamedTemporaryFile(prefix='ipae_test_', suffix='.mp4', delete=False)
+        video_output.write(video_content)
+        video_output.close()
+        vidclip_output = VideoFileClip(video_output.name)
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertEqual(size[0], vidclip_output.size[0])
+        self.assertEqual(size[1], vidclip_output.size[1])
+
+        im = Image.open(io.BytesIO(thumbnail_content))
+        self.assertEqual(size[0], im.size[0])
+        self.assertEqual(size[1], im.size[1])
 
     def test_prepare_video3(self):
-        _, size, duration, _ = media.prepare_video(
-            self.TEST_VIDEO_PATH, max_size=None, skip_reencoding=True, min_size=None)
-        start_ts = time.time()
-        self.assertEqual(duration, self.TEST_VIDEO_DURATION, 'Duration changed.')
+        video_content, size, duration, thumbnail_content = media.prepare_video(
+            self.TEST_VIDEO_PATH, max_size=None, max_duration=1000.0,
+            skip_reencoding=True, min_size=None)
+
         self.assertEqual(size[0], self.TEST_VIDEO_SIZE[0], 'Width changed.')
         self.assertEqual(size[1], self.TEST_VIDEO_SIZE[1], 'Height changed.')
-        end_ts = time.time()
-        self.assertLessEqual(end_ts - start_ts, 0.2, 'Skip reencoding is slow')
+
+        self.assertGreater(len(video_content), 0, 'No video content returned.')
+        self.assertGreater(len(thumbnail_content), 0, 'No thumbnail content returned.')
+
+        # Save video, thumbnail content and verify attributes
+        video_output = tempfile.NamedTemporaryFile(prefix='ipae_test_', suffix='.mp4', delete=False)
+        video_output.write(video_content)
+        video_output.close()
+        vidclip_output = VideoFileClip(video_output.name)
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertEqual(size[0], vidclip_output.size[0])
+        self.assertEqual(size[1], vidclip_output.size[1])
+
+        im = Image.open(io.BytesIO(thumbnail_content))
+        self.assertEqual(size[0], im.size[0])
+        self.assertEqual(size[1], im.size[1])
+
+        self.assertEqual(
+            os.path.getsize(video_output.name),
+            os.path.getsize(self.TEST_VIDEO_PATH))
 
     def test_remote_video(self):
         video_url = 'https://raw.githubusercontent.com/johndyer/mediaelement-files/master/big_buck_bunny.mp4'
-        _, size, duration, _ = media.prepare_video(
+        video_content, size, duration, thumbnail_content = media.prepare_video(
             video_url, aspect_ratios=1.0, max_duration=10)
         self.assertEqual(duration, 10.0, 'Invalid duration.')
         self.assertEqual(size[0], size[1], 'Invalid width/length.')
+        self.assertGreater(len(video_content), 0, 'No video content returned.')
+        self.assertGreater(len(thumbnail_content), 0, 'No thumbnail content returned.')
+
+        # Save video, thumbnail content and verify attributes
+        video_output = tempfile.NamedTemporaryFile(prefix='ipae_test_', suffix='.mp4', delete=False)
+        video_output.write(video_content)
+        video_output.close()
+        vidclip_output = VideoFileClip(video_output.name)
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertEqual(size[0], vidclip_output.size[0])
+        self.assertEqual(size[1], vidclip_output.size[1])
+
+        im = Image.open(io.BytesIO(thumbnail_content))
+        self.assertEqual(size[0], im.size[0])
+        self.assertEqual(size[1], im.size[1])
 
     def test_helper_methods(self):
         self.assertRaises(ValueError, lambda: media.prepare_video(
