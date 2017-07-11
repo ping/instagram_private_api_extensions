@@ -52,7 +52,7 @@ class TestMedia(unittest.TestCase):
 
     def test_prepare_image4(self):
         with self.assertRaises(ValueError):
-            _, size = media.prepare_image(
+            media.prepare_image(
                 self.TEST_IMAGE_PATH, max_size=(1080, 1350), aspect_ratios=(4.0 / 5), min_size=(1081, 640))
 
     def test_remote_image(self):

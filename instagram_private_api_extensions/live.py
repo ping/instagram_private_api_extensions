@@ -332,7 +332,7 @@ class Downloader(object):
                 with open(output, 'wb') as f:
                     if init_chunk:
                         # prepend init chunk
-                        logger.debug('Appended chunk len {0:d} to {0!s}'.format(
+                        logger.debug('Appended chunk len {0:d} to {1!s}'.format(
                             len(init_chunk), output))
                         f.write(init_chunk)
                     f.write(res.content)
