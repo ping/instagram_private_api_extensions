@@ -9,6 +9,7 @@
 ---
 
 ### Before submitting an issue make sure you have:
+- [ ] Updated to the lastest version v0.3.6
 - [ ] Read the [README](https://github.com/ping/instagram_private_api_extensions/blob/master/README.md)
 - [ ] [Searched](https://github.com/ping/instagram_private_api_extensions/search?type=Issues) the bugtracker for similar issues including **closed** ones
 
