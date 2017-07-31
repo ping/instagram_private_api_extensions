@@ -163,9 +163,9 @@ class TestLive(unittest.TestCase):
             with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
                 rsps.add(responses.GET, self.TEST_MPD_URL, body=mpd_content)
                 rsps.add(responses.GET, self.TEST_MPD_URL, body=mpd_content,
-                         adding_headers={'Cache-Control': 'max-age=1'})
+                         headers={'Cache-Control': 'max-age=1'})
                 rsps.add(responses.GET, self.TEST_MPD_URL, body=mpd_content,
-                         adding_headers={'X-FB-Video-Broadcast-Ended': '1'})
+                         headers={'X-FB-Video-Broadcast-Ended': '1'})
 
                 dl = live.Downloader(
                     mpd=self.TEST_MPD_URL,
@@ -174,9 +174,9 @@ class TestLive(unittest.TestCase):
 
             with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
                 rsps.add(responses.GET, self.TEST_MPD_URL, body=mpd_content,
-                         adding_headers={'Cache-Control': 'max-age=1'})
+                         headers={'Cache-Control': 'max-age=1'})
                 rsps.add(responses.GET, self.TEST_MPD_URL, body=mpd_content,
-                         adding_headers={'Cache-Control': 'max-age=1000'})
+                         headers={'Cache-Control': 'max-age=1000'})
 
                 dl = live.Downloader(
                     mpd=self.TEST_MPD_URL,
