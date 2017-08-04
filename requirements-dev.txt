@@ -1,4 +1,4 @@
 flake8
-responses>=0.6.0
+responses==0.6.0
 Sphinx>=1.5.1
 sphinx-rtd-theme>=0.1.9
