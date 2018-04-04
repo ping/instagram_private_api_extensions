@@ -3,4 +3,4 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-__version__ = '0.3.6'
+__version__ = '0.3.7'
