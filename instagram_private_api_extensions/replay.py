@@ -63,7 +63,7 @@ class Downloader(object):
                 float(mobj.group('secs'))
             ))
         else:
-            logger.warning('Unable to parse duration: %s' % duration_attribute)
+            logger.warning('Unable to parse duration: {}'.format(duration_attribute))
             duration = 0
         self.duration = duration
 
@@ -193,6 +193,8 @@ class Downloader(object):
 
 
 if __name__ == '__main__':      # pragma: no cover
+
+    # pylint: disable-all
 
     # Example of how to init and start the Downloader
     parser = argparse.ArgumentParser()

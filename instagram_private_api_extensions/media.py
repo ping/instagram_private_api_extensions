@@ -162,6 +162,11 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
          - **min_size**: tuple of (min_width,  min_height)
          - **progress_bar**: bool flag to show/hide progress bar
          - **save_only**: bool flag to return only the path to the saved video file. Requires save_path be set.
+         - **preset**: Sets the time that FFMPEG will spend optimizing the compression.
+         Choices are: ultrafast, superfast, veryfast, faster, fast, medium,
+         slow, slower, veryslow, placebo. Note that this does not impact
+         the quality of the video, only the size of the video file. So
+         choose ultrafast when you are in a hurry and file size does not matter.
     :return:
     """
     from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -170,6 +175,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
     min_size = kwargs.pop('min_size', (612, 320))
     progress_bar = True if kwargs.pop('progress_bar', None) else False
     save_only = kwargs.pop('save_only', False)
+    preset = kwargs.pop('preset', 'medium')
     if save_only and not save_path:
         raise ValueError('"save_path" cannot be empty.')
     if save_path:
@@ -218,7 +224,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         # write out
         vidclip.write_videofile(
             temp_vid_output_file.name, codec='libx264', audio=True, audio_codec='aac',
-            verbose=False, progress_bar=progress_bar)
+            verbose=False, progress_bar=progress_bar, preset=preset, remove_temp=True)
     else:
         # no reencoding
         shutil.copyfile(video_src_filename, temp_vid_output_file.name)
@@ -250,6 +256,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
 
 
 if __name__ == '__main__':      # pragma: no cover
+    # pylint: disable-all
     import argparse
 
     parser = argparse.ArgumentParser(description='Demo media.py')

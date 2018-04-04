@@ -20,7 +20,7 @@ try:
 except ValueError:
     # pragma: no cover
     # To allow running in terminal
-    from compat import compat_urlparse
+    from compat import compat_urlparse      # pylint: disable=relative-import
 
 
 logger = logging.getLogger(__file__)
@@ -32,7 +32,7 @@ MPD_NAMESPACE = {'mpd': 'urn:mpeg:dash:schema:mpd:2011'}
 class Downloader(object):
     """Downloads and assembles a given IG live stream"""
 
-    USER_AGENT = 'Instagram 10.14.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
+    USER_AGENT = 'Instagram 10.26.0 (iPhone8,1; iOS 10_2; en_US; en-US; ' \
                  'scale=2.00; gamut=normal; 750x1334) AppleWebKit/420+'
     MPD_DOWNLOAD_TIMEOUT = 2
     DOWNLOAD_TIMEOUT = 15
@@ -207,7 +207,7 @@ class Downloader(object):
                         if abort:
                             logger.debug('Callback returned True')
                             self.is_aborted = True
-                    except Exception as e:
+                    except Exception as e:      # pylint: disable=broad-except
                         logger.warning('Error from callback: {0!s}'.format(str(e)))
             # Final hard abort
             elif self.duplicate_etag_count >= self.duplicate_etag_retry:
@@ -376,7 +376,9 @@ class Downloader(object):
         has_ffmpeg_error = False
         files_generated = []
 
-        all_segments = sorted(self.segment_meta.keys(), key=lambda x: self._get_file_index(x))
+        all_segments = sorted(
+            self.segment_meta.keys(),
+            key=lambda x: self._get_file_index(x))    # pylint: disable=unnecessary-lambda
         prev_res = ''
         sources = []
         audio_stream_format = 'source_{0}_{1}_mp4.tmp'
