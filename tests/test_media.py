@@ -65,7 +65,7 @@ class TestMedia(unittest.TestCase):
 
     def test_prepare_video(self):
         vid_returned, size, duration, thumbnail_content = media.prepare_video(
-            self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10, save_path='media/output.mp4',
+            self.TEST_VIDEO_PATH, aspect_ratios=1.0, max_duration=10.0, save_path='media/output.mp4',
             save_only=True)
         self.assertEqual(duration, 10.0, 'Invalid duration.')
         self.assertEqual(size[0], size[1], 'Invalid width/length.')
@@ -80,7 +80,7 @@ class TestMedia(unittest.TestCase):
 
         # Save video, thumbnail content and verify attributes
         vidclip_output = VideoFileClip('media/output.mp4')
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
         self.assertEqual(size[0], vidclip_output.size[0])
         self.assertEqual(size[1], vidclip_output.size[1])
 
@@ -106,7 +106,7 @@ class TestMedia(unittest.TestCase):
         video_output.write(video_content)
         video_output.close()
         vidclip_output = VideoFileClip(video_output.name)
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
         self.assertEqual(size[0], vidclip_output.size[0])
         self.assertEqual(size[1], vidclip_output.size[1])
 
@@ -130,7 +130,7 @@ class TestMedia(unittest.TestCase):
         video_output.write(video_content)
         video_output.close()
         vidclip_output = VideoFileClip(video_output.name)
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
         self.assertEqual(size[0], vidclip_output.size[0])
         self.assertEqual(size[1], vidclip_output.size[1])
 
@@ -145,7 +145,7 @@ class TestMedia(unittest.TestCase):
     def test_remote_video(self):
         video_url = 'https://raw.githubusercontent.com/johndyer/mediaelement-files/master/big_buck_bunny.mp4'
         video_content, size, duration, thumbnail_content = media.prepare_video(
-            video_url, aspect_ratios=1.0, max_duration=10)
+            video_url, aspect_ratios=1.0, max_duration=10.0)
         self.assertEqual(duration, 10.0, 'Invalid duration.')
         self.assertEqual(size[0], size[1], 'Invalid width/length.')
         self.assertGreater(len(video_content), 0, 'No video content returned.')
@@ -156,7 +156,7 @@ class TestMedia(unittest.TestCase):
         video_output.write(video_content)
         video_output.close()
         vidclip_output = VideoFileClip(video_output.name)
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=1)
+        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
         self.assertEqual(size[0], vidclip_output.size[0])
         self.assertEqual(size[1], vidclip_output.size[1])
 
