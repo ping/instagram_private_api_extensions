@@ -299,7 +299,11 @@ class Downloader(object):
                     self._extract(
                         os.path.basename(seg_filename),
                         segment_url,
-                        os.path.join(self.output_dir, os.path.basename(seg_filename)),
+                        os.path.join(
+                            self.output_dir,
+                            os.path.basename(
+                                compat_urlparse.urlparse(seg_filename).path)
+                        ),
                         init_chunk=init_chunk)
 
                 if not self.initial_buffered_duration:

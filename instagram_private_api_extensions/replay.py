@@ -12,6 +12,12 @@ import subprocess
 from contextlib import closing
 
 import requests
+try:
+    from .compat import compat_urllib_parse_urlparse
+except ValueError:
+    # pragma: no cover
+    # To allow running in terminal
+    from compat import compat_urllib_parse_urlparse      # pylint: disable=relative-import
 
 
 logger = logging.getLogger(__file__)
@@ -121,8 +127,14 @@ class Downloader(object):
                 if audio_stream and video_stream:
                     break
 
-            audio_file = os.path.join(self.output_dir, os.path.basename(audio_stream))
-            video_file = os.path.join(self.output_dir, os.path.basename(video_stream))
+            audio_file = os.path.join(
+                self.output_dir,
+                os.path.basename(compat_urllib_parse_urlparse(audio_stream).path)
+            )
+            video_file = os.path.join(
+                self.output_dir,
+                os.path.basename(compat_urllib_parse_urlparse(video_stream).path)
+            )
             for target in ((audio_stream, audio_file), (video_stream, video_file)):
                 logger.debug('Downloading {} as {}'.format(*target))
                 with closing(self.session.get(
