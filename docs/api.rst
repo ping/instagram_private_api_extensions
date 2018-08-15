@@ -8,6 +8,7 @@ This page of the documentation will cover all methods and classes available to t
 - `Media`_
 - `Pagination`_
 - `Live`_
+- `Replay`_
 
 ..  _api_media:
 
