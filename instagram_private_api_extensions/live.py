@@ -175,6 +175,19 @@ class Downloader(object):
         else:
             max_age = 0
 
+        # Use etag to detect if the same mpd is received repeatedly
+        etag = res.headers.get('etag')
+        if not etag:
+            # use contents hash as psuedo etag
+            m = hashlib.md5()
+            m.update(xml_text.encode('utf-8'))
+            etag = m.hexdigest()
+        if etag and etag != self.last_etag:
+            self.last_etag = etag
+            self.duplicate_etag_count = 0
+        elif etag:
+            self.duplicate_etag_count += 1
+
         if broadcast_ended:
             logger.debug('Found X-FB-Video-Broadcast-Ended header: {0!s}'.format(broadcast_ended))
             logger.info('Stream ended.')
@@ -183,19 +196,6 @@ class Downloader(object):
             logger.info('Stream ended (cache-control: {0!s}).'.format(cache_control))
             self.is_aborted = True
         else:
-            # Use etag to detect if the same mpd is received repeatedly
-            etag = res.headers.get('etag')
-            if not etag:
-                # use contents hash as psuedo etag
-                m = hashlib.md5()
-                m.update(xml_text.encode('utf-8'))
-                etag = m.hexdigest()
-            if etag and etag != self.last_etag:
-                self.last_etag = etag
-                self.duplicate_etag_count = 0
-            elif etag:
-                self.duplicate_etag_count += 1
-
             # Periodically check callback if duplicate etag is detected
             if self.duplicate_etag_count and (self.duplicate_etag_count % 5 == 0):
                 logger.warning('Duplicate etag {0!s} detected {1:d} time(s)'.format(
