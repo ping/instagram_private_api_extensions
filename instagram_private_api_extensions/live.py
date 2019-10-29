@@ -385,8 +385,8 @@ class Downloader(object):
             key=lambda x: self._get_file_index(x))    # pylint: disable=unnecessary-lambda
         prev_res = ''
         sources = []
-        audio_stream_format = 'source_{0}_{1}_mp4.tmp'
-        video_stream_format = 'source_{0}_{1}_m4a.tmp'
+        audio_stream_format = 'source_{0}_{1}_m4a.tmp'
+        video_stream_format = 'source_{0}_{1}_m4v.tmp'
         video_stream = ''
         audio_stream = ''
 
