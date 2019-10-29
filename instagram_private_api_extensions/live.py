@@ -263,7 +263,7 @@ class Downloader(object):
 
                 # store stream ID
                 if not self.stream_id:
-                    mobj = re.search(r'\b(?P<id>[0-9]+)\-init', init_segment)
+                    mobj = re.search(r'\b(?P<id>[0-9_]+)\-init', init_segment)
                     if mobj:
                         self.stream_id = mobj.group('id')
 
