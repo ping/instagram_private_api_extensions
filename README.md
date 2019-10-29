@@ -32,13 +32,13 @@ Documentation is available at https://instagram-private-api-extensions.readthedo
 Install with pip using
 
 ```bash
-pip install git+https://git@github.com/ping/instagram_private_api_extensions.git@0.3.8
+pip install git+https://git@github.com/ping/instagram_private_api_extensions.git@0.3.9
 ```
 
 To update:
 
 ```bash
-pip install git+https://git@github.com/ping/instagram_private_api_extensions.git@0.3.8 --upgrade
+pip install git+https://git@github.com/ping/instagram_private_api_extensions.git@0.3.9 --upgrade
 ```
 
 To update with latest repo code:
