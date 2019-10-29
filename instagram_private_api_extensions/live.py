@@ -20,7 +20,7 @@ try:
 except ValueError:
     # pragma: no cover
     # To allow running in terminal
-    from compat import compat_urlparse      # pylint: disable=relative-import
+    from compat import compat_urlparse
 
 
 logger = logging.getLogger(__file__)
@@ -279,7 +279,8 @@ class Downloader(object):
                     segment_url = compat_urlparse.urljoin(self.mpd, seg_filename)
 
                     if representation_label:
-                        self._store_segment_meta(os.path.basename(seg_filename), representation_label)
+                        self._store_segment_meta(
+                            os.path.basename(compat_urlparse.urlparse(seg_filename).path), representation_label)
 
                     # Append init chunk to first segment in the timeline for now
                     # Not sure if it's needed for every segment yet
@@ -522,7 +523,7 @@ if __name__ == '__main__':      # pragma: no cover
     dl = Downloader(mpd=args.mpd, output_dir=args.o)
     try:
         dl.run()
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         logger.info('Interrupted')
         if not dl.is_aborted:
             dl.stop()
