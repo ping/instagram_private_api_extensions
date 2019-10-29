@@ -17,7 +17,7 @@ try:
 except ValueError:
     # pragma: no cover
     # To allow running in terminal
-    from compat import compat_urllib_parse_urlparse      # pylint: disable=relative-import
+    from compat import compat_urllib_parse_urlparse
 
 
 logger = logging.getLogger(__file__)
@@ -233,5 +233,5 @@ if __name__ == '__main__':      # pragma: no cover
             generated_files = dl.download(args.s, cleartempfiles=args.c)
             print('Video Duration: %s' % dl.duration)
             print('Generated files: \n%s' % '\n'.join(generated_files))
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             logger.info('Interrupted')
