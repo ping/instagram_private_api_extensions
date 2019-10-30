@@ -238,6 +238,7 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
 
     video_duration = vidclip.duration
     video_size = vidclip.size
+    vidclip.close()     # Try to clean up for Windows https://github.com/Zulko/moviepy/issues/833#issuecomment-448938628
     del vidclip      # clear it out
 
     video_thumbnail_content = temp_thumbnail_file.read()
