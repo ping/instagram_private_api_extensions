@@ -5,7 +5,7 @@ An extension module to [instagram\_private\_api](https://github.com/ping/instagr
 ![](https://img.shields.io/badge/Python-2.7%2C%203.5-3776ab.svg?maxAge=2592000)
 [![Release](https://img.shields.io/github/release/ping/instagram_private_api_extensions.svg?colorB=ff7043)](https://github.com/ping/instagram_private_api_extensions/releases)
 [![Docs](https://img.shields.io/badge/docs-readthedocs.io-ff4980.svg?maxAge=2592000)](https://instagram-private-api-extensions.readthedocs.io/en/latest/)
-[![Build](https://img.shields.io/travis/ping/instagram_private_api_extensions.svg)](https://travis-ci.org/ping/instagram_private_api_extensions)
+[![Build](https://img.shields.io/travis/com/ping/instagram_private_api_extensions.svg)](https://travis-ci.com/ping/instagram_private_api_extensions)
 [![Coverage](https://img.shields.io/coveralls/ping/instagram_private_api_extensions.svg)](https://coveralls.io/github/ping/instagram_private_api_extensions)
 
 ## Features
