@@ -38,7 +38,7 @@ def page(fn, args, cursor_key='max_id', get_cursor=lambda r: r.get('next_max_id'
     :param fn: function call
     :param args: dict of arguments to pass to fn
     :param cursor_key: param name for the cursor, e.g. 'max_id'
-    :param get_cursor: anonymous funtion to etract the next cursor value
+    :param get_cursor: anonymous function to etract the next cursor value
     :param wait: interval in seconds to sleep between api calls
     :return:
     """
