@@ -29,7 +29,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=packages,
-    install_requires=['moviepy==0.2.3.2', 'Pillow>=4.0.0', 'requests>=2.9.1'],
+    install_requires=['moviepy==1.0.1', 'Pillow>=4.0.0', 'requests>=2.9.1'],
     test_requires=test_reqs,
     platforms=['any'],
     classifiers=[
