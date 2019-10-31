@@ -195,65 +195,64 @@ def prepare_video(vid, thumbnail_frame_ts=0.0,
         shutil.copyfile(vid, temp_video_file.name)
         video_src_filename = vid
 
-    vidclip = VideoFileClip(temp_video_file.name)
+    # Ref: https://github.com/Zulko/moviepy/issues/833#issuecomment-537885162
+    with VideoFileClip(temp_video_file.name) as vidclip:
 
-    if vidclip.duration < 3 * 1.0:
-        raise ValueError('Duration is too short')
+        if vidclip.duration < 3 * 1.0:
+            raise ValueError('Duration is too short')
 
-    if vidclip.duration > max_duration * 1.0:
-        vidclip = vidclip.subclip(0, max_duration)
-        vid_is_modified = True
-
-    if thumbnail_frame_ts > vidclip.duration:
-        raise ValueError('Invalid thumbnail frame')
-
-    if aspect_ratios:
-        crop_box = calc_crop(aspect_ratios, vidclip.size)
-        if crop_box:
-            vidclip = crop(vidclip, x1=crop_box[0], y1=crop_box[1], x2=crop_box[2], y2=crop_box[3])
+        if vidclip.duration > max_duration * 1.0:
+            vidclip = vidclip.subclip(0, max_duration)
             vid_is_modified = True
 
-    if max_size or min_size:
-        new_size = calc_resize(max_size, vidclip.size, min_size=min_size)
-        if new_size:
-            vidclip = resize(vidclip, newsize=new_size)
-            vid_is_modified = True
+        if thumbnail_frame_ts > vidclip.duration:
+            raise ValueError('Invalid thumbnail frame')
 
-    temp_vid_output_file = tempfile.NamedTemporaryFile(prefix='ipae_', suffix='.mp4', delete=False)
-    if vid_is_modified or not skip_reencoding:
-        # write out
-        vidclip.write_videofile(
-            temp_vid_output_file.name, codec='libx264', audio=True, audio_codec='aac',
-            verbose=False, logger=logger, preset=preset, remove_temp=True)
-    else:
-        # no reencoding
-        shutil.copyfile(video_src_filename, temp_vid_output_file.name)
+        if aspect_ratios:
+            crop_box = calc_crop(aspect_ratios, vidclip.size)
+            if crop_box:
+                vidclip = crop(vidclip, x1=crop_box[0], y1=crop_box[1], x2=crop_box[2], y2=crop_box[3])
+                vid_is_modified = True
 
-    if save_path:
-        shutil.copyfile(temp_vid_output_file.name, save_path)
+        if max_size or min_size:
+            new_size = calc_resize(max_size, vidclip.size, min_size=min_size)
+            if new_size:
+                vidclip = resize(vidclip, newsize=new_size)
+                vid_is_modified = True
 
-    # Temp thumbnail img filename
-    temp_thumbnail_file = tempfile.NamedTemporaryFile(prefix='ipae_', suffix='.jpg', delete=False)
-    vidclip.save_frame(temp_thumbnail_file.name, t=thumbnail_frame_ts)
+        temp_vid_output_file = tempfile.NamedTemporaryFile(prefix='ipae_', suffix='.mp4', delete=False)
+        if vid_is_modified or not skip_reencoding:
+            # write out
+            vidclip.write_videofile(
+                temp_vid_output_file.name, codec='libx264', audio=True, audio_codec='aac',
+                verbose=False, logger=logger, preset=preset, remove_temp=True)
+        else:
+            # no reencoding
+            shutil.copyfile(video_src_filename, temp_vid_output_file.name)
 
-    video_duration = vidclip.duration
-    video_size = vidclip.size
-    vidclip.close()     # Try to clean up for Windows https://github.com/Zulko/moviepy/issues/833#issuecomment-448938628
-    del vidclip      # clear it out
+        if save_path:
+            shutil.copyfile(temp_vid_output_file.name, save_path)
 
-    video_thumbnail_content = temp_thumbnail_file.read()
+        # Temp thumbnail img filename
+        temp_thumbnail_file = tempfile.NamedTemporaryFile(prefix='ipae_', suffix='.jpg', delete=False)
+        vidclip.save_frame(temp_thumbnail_file.name, t=thumbnail_frame_ts)
 
-    if not save_only:
-        video_content_len = os.path.getsize(temp_vid_output_file.name)
-        video_content = temp_vid_output_file.read()
-    else:
-        video_content_len = os.path.getsize(save_path)
-        video_content = save_path    # return the file path instead
+        video_duration = vidclip.duration
+        video_size = vidclip.size
 
-    if video_content_len > 50 * 1024 * 1000:
-        raise ValueError('Video file is too big.')
+        video_thumbnail_content = temp_thumbnail_file.read()
 
-    return video_content, video_size, video_duration, video_thumbnail_content
+        if not save_only:
+            video_content_len = os.path.getsize(temp_vid_output_file.name)
+            video_content = temp_vid_output_file.read()
+        else:
+            video_content_len = os.path.getsize(save_path)
+            video_content = save_path    # return the file path instead
+
+        if video_content_len > 50 * 1024 * 1000:
+            raise ValueError('Video file is too big.')
+
+        return video_content, video_size, video_duration, video_thumbnail_content
 
 
 if __name__ == '__main__':      # pragma: no cover

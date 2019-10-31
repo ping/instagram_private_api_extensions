@@ -79,10 +79,10 @@ class TestMedia(unittest.TestCase):
         self.assertGreater(len(thumbnail_content), 0, 'No thumbnail content returned.')
 
         # Save video, thumbnail content and verify attributes
-        vidclip_output = VideoFileClip('media/output.mp4')
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
-        self.assertEqual(size[0], vidclip_output.size[0])
-        self.assertEqual(size[1], vidclip_output.size[1])
+        with VideoFileClip('media/output.mp4') as vidclip_output:
+            self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
+            self.assertEqual(size[0], vidclip_output.size[0])
+            self.assertEqual(size[1], vidclip_output.size[1])
 
         im = Image.open(io.BytesIO(thumbnail_content))
         self.assertEqual(size[0], im.size[0])
@@ -105,10 +105,10 @@ class TestMedia(unittest.TestCase):
         video_output = tempfile.NamedTemporaryFile(prefix='ipae_test_', suffix='.mp4', delete=False)
         video_output.write(video_content)
         video_output.close()
-        vidclip_output = VideoFileClip(video_output.name)
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
-        self.assertEqual(size[0], vidclip_output.size[0])
-        self.assertEqual(size[1], vidclip_output.size[1])
+        with VideoFileClip(video_output.name) as vidclip_output:
+            self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
+            self.assertEqual(size[0], vidclip_output.size[0])
+            self.assertEqual(size[1], vidclip_output.size[1])
 
         im = Image.open(io.BytesIO(thumbnail_content))
         self.assertEqual(size[0], im.size[0])
@@ -129,10 +129,10 @@ class TestMedia(unittest.TestCase):
         video_output = tempfile.NamedTemporaryFile(prefix='ipae_test_', suffix='.mp4', delete=False)
         video_output.write(video_content)
         video_output.close()
-        vidclip_output = VideoFileClip(video_output.name)
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
-        self.assertEqual(size[0], vidclip_output.size[0])
-        self.assertEqual(size[1], vidclip_output.size[1])
+        with VideoFileClip(video_output.name) as vidclip_output:
+            self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
+            self.assertEqual(size[0], vidclip_output.size[0])
+            self.assertEqual(size[1], vidclip_output.size[1])
 
         im = Image.open(io.BytesIO(thumbnail_content))
         self.assertEqual(size[0], im.size[0])
@@ -155,10 +155,10 @@ class TestMedia(unittest.TestCase):
         video_output = tempfile.NamedTemporaryFile(prefix='ipae_test_', suffix='.mp4', delete=False)
         video_output.write(video_content)
         video_output.close()
-        vidclip_output = VideoFileClip(video_output.name)
-        self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
-        self.assertEqual(size[0], vidclip_output.size[0])
-        self.assertEqual(size[1], vidclip_output.size[1])
+        with VideoFileClip(video_output.name) as vidclip_output:
+            self.assertAlmostEqual(duration, vidclip_output.duration, places=0)
+            self.assertEqual(size[0], vidclip_output.size[0])
+            self.assertEqual(size[1], vidclip_output.size[1])
 
         im = Image.open(io.BytesIO(thumbnail_content))
         self.assertEqual(size[0], im.size[0])
